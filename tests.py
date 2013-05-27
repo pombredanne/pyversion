@@ -26,12 +26,21 @@ class ComparisonTests(unittest.TestCase):
                         ('3.2.1+7', '3.2.2+6'),
                         ('6.4.8-a.3+17', '6.4.8-a.4+2'),
                         ('6.4.8', '6.40.8'),
+                        ('3.2.1-rc.8', '3.2.1'),
                     ]
         for l, g in versions:
             self.assertEqual(True, semver.version.Version(l) < semver.version.Version(g))
             self.assertEqual(True, semver.version.Version(g) > semver.version.Version(l))
             self.assertEqual(False, semver.version.Version(g) == semver.version.Version(l))
             self.assertEqual(True, semver.version.Version(g) != semver.version.Version(l))
+
+    def testGreaterOrEqual(self):
+        vs = [  ('3.2.1', '3.2.1'),
+                ('3.2.2', '3.2.1'),
+                ('3.3.6-rc.7', '3.3.6-rc.5'),
+                ]
+        for x, y in vs:
+            self.assertEqual(True, x >= y)
 
 
 class InitializationTests(unittest.TestCase):
@@ -41,18 +50,32 @@ class InitializationTests(unittest.TestCase):
         self.assertEqual(9, v.minor)
         self.assertEqual(3, v.patch)
 
-    def testVersionAndIdentifiers(self):
+    def testVersionAndPrerelease(self):
         v = semver.version.Version('3.9.3-alpha.1.release.3')
         self.assertEqual(3, v.major)
         self.assertEqual(9, v.minor)
         self.assertEqual(3, v.patch)
-        self.assertEqual(['alpha', 1, 'release', 3], v.identifiers)
+        self.assertEqual(['alpha', 1, 'release', 3], v.prerelease)
 
     def testBuildMetadata(self):
         v1 = semver.version.Version('3.9.3-alpha.1+42')
         v2 = semver.version.Version('3.9.3+42')
         self.assertEqual('42', v1.build)
         self.assertEqual('42', v2.build)
+
+
+class SatisfactionTests(unittest.TestCase):
+    def testMinimal(self):
+        v = semver.version.Version('3.2.1')
+        self.assertEqual(True, v.satisfies(min='3.0.0'))
+
+    def testMaximal(self):
+        v = semver.version.Version('1.8.12')
+        self.assertEqual(True, v.satisfies(max='3.2.1'))
+    
+    def testBetween(self):
+        v = semver.version.Version('3.2.1-rc.8')
+        self.assertEqual(True, v.satisfies(min='3.2.1-alpha.1', max='3.2.1-rc.12'))
 
 
 class StringTests(unittest.TestCase):

@@ -14,7 +14,7 @@ __version__ = '0.0.1'
 
 valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
 base_regexp =   ('[0-9]+\.[0-9]+\.[0-9]+'                   #   major.minor.patch
-                '(-([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?'     #   identifiers
+                '(-([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?'     #   prerelease
                 '(\+([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?')   #   build
 match_regexp = re.compile('^{0}$'.format(base_regexp))
 
@@ -29,24 +29,24 @@ class InvalidIdentifierError(Exception):
 
 def _split(string):
     """Splits version string into main version,
-    identifiers and build metadata.
+    prerelease and build metadata.
     """
-    version, identifiers, build = '', '', ''
+    version, prerelease, build = '', '', ''
     if '-' in string:
         n = string.index('-')
         version = string[:n]
-        identifiers = string[n+1:]
+        prerelease = string[n+1:]
     else:
         version = string
-    if '+' in identifiers:
-        n = identifiers.rindex('+')
-        build = identifiers[n+1:]
-        identifiers = identifiers[:n]
+    if '+' in prerelease:
+        n = prerelease.rindex('+')
+        build = prerelease[n+1:]
+        prerelease = prerelease[:n]
     if '+' in version:
         n = version.rindex('+')
         build = version[n+1:]
         version = version[:n]
-    return (version, identifiers, build)
+    return (version, prerelease, build)
 
 
 def valid(string):
@@ -61,7 +61,7 @@ class Version():
     """
     string = ''
     major, minor, patch = 0, 0, 0
-    identifiers = []
+    prerelease = []
     build = ''
 
     def __init__(self, string):
@@ -71,14 +71,14 @@ class Version():
         self.string = string
         if not valid(self.string):
             raise InvalidVersionStringError('invalid version string: {0}'.format(self.string))
-        version, identifiers, build = _split(self.string)
-        self._analyze(version, identifiers, build)
+        version, prerelease, build = _split(self.string)
+        self._analyze(version, prerelease, build)
 
-    def _lesseridentifiers(self, fidentifiers):
+    def _lesserprerelease(self, fprerelease):
         result = True
-        for i, t in enumerate(zip(self.identifiers, fidentifiers)):
+        for i, t in enumerate(zip(self.prerelease, fprerelease)):
             local, foreign = t
-            if local > foreign and not self._lesseridentifiers(fidentifiers[i+1:]):
+            if local > foreign and not self._lesserprerelease(fprerelease[i+1:]):
                 result = False
                 break
         return result
@@ -88,7 +88,7 @@ class Version():
         """
         result = False
         if (self.major == v.major and self.minor == v.minor and 
-            self.patch == v.patch and self.identifiers == v.identifiers):
+            self.patch == v.patch and self.prerelease == v.prerelease):
             result = True
         return result
 
@@ -105,24 +105,30 @@ class Version():
         elif self.major == v.major and self.minor == v.minor and self.patch > v.patch:
             result = False
         elif self.major == v.major and self.minor == v.minor and self.patch == v.patch:
-            if not self._lesseridentifiers(v.identifiers): result = False
+            if not self._lesserprerelease(v.prerelease): result = False
         return result
 
+    def __le__(self, v):
+        return self.__eq__(v) or self.__lt__(v)
+
+    def __ge__(self, v):
+        return self.__eq__(v) or self.__gt__(v)
+
     def __str__(self):
-        """Returns only version (without identifiers or
+        """Returns only version (without prerelease or
         build metadata).
         To get string representation with more info use repr().
         """
         return '{0}.{1}.{2}'.format(self.major, self.minor, self.patch)
 
     def __repr__(self):
-        """Returns version, identifiers and build metadata.
+        """Returns version, prerelease and build metadata.
         To get only version use str().
         """
         final = str(self)
-        if self.identifiers:
+        if self.prerelease:
             final += '-'
-            for i in self.identifiers: final += '{0}.'.format(i)
+            for i in self.prerelease: final += '{0}.'.format(i)
             final = final[:-1]
         if self.build: final += '+{0}'.format(self.build)
         return final
@@ -137,21 +143,21 @@ class Version():
         self.minor = int(version[1])
         self.patch = int(version[2])
 
-    def _setidentifiers(self, identifiers):
-        """Sets identifiers.
-        :param identifiers: identifiers string (e.g.: alpha.1.release.3)
-        :type identifiers: str
+    def _setprerelease(self, prerelease):
+        """Sets prerelease.
+        :param prerelease: prerelease string (e.g.: alpha.1.release.3)
+        :type prerelease: str
         """
-        if identifiers: identifiers = identifiers.split('.')
-        else: identifiers = []
+        if prerelease: prerelease = prerelease.split('.')
+        else: prerelease = []
 
-        for i in range(len(identifiers)):
-            identifier = identifiers[i]
+        for i in range(len(prerelease)):
+            identifier = prerelease[i]
             if re.match(valid_identifier_regexp, identifier) is None:
                 raise InvalidIdentifierError('invalid identifier (part {0}): {1}'.format(i+1, identifier))
             if identifier.isdecimal(): identifier = int(identifier)
-            identifiers[i] = identifier
-        self.identifiers = identifiers
+            prerelease[i] = identifier
+        self.prerelease = prerelease
 
     def _setbuild(self, build):
         """Sets build metadata.
@@ -160,11 +166,24 @@ class Version():
         """
         self.build = build
 
-    def _analyze(self, version, identifiers='', build=''):
+    def _analyze(self, version, prerelease='', build=''):
         """Analyzes version data.
-        :param vt: version tuple (version, identifiers) returned by split()
+        :param vt: version tuple (version, prerelease) returned by split()
         :type vt: tuple
         """
         self._setversion(version)
-        self._setidentifiers(identifiers)
+        self._setprerelease(prerelease)
         self._setbuild(build)
+
+    def satisfies(self, min=None, max=None):
+        """Returns True if this version satisfies requirements
+        set as arguments.
+        """
+        result = False
+        if min is not None and max is None:
+            result = self > Version(min)
+        elif min is None and max is not None:
+            result = self < Version(max)
+        elif min is not None and max is not None:
+            result = self > Version(min) and self < Version(max)
+        return result
