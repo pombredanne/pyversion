@@ -26,4 +26,29 @@ class InitializationTests(unittest.TestCase):
         self.assertEqual('42', v2.build)
 
 
+class ComparisonTests(unittest.TestCase):
+    def testCompareOnlyVersion(self):
+        lesser = semver.version.Version('3.8.42')
+        greater = semver.version.Version('3.9.24')
+        self.assertEqual(True, lesser < greater)
+        self.assertEqual(True, greater > lesser)
+        self.assertEqual(False, greater == lesser)
+        self.assertEqual(True, greater != lesser)
+
+    def testCompareVersionsAndIdentifiersLesserToGreater(self):
+        versions =  [   ('3.2.1-alpha', '3.2.1-alpha.1'),
+                        ('3.2.1-alpha.1', '3.2.1-beta'),
+                        ('3.2.1-beta', '3.2.1-beta.4'),
+                        ('3.2.1-beta.4', '3.2.1-beta.17'),
+                        ('3.2.1-beta.17', '3.2.1-rc.8'),
+                        ('3.2.1-rc.8', '3.2.1-rc.12'),
+                    ]
+        for l, g in versions:
+            print(l, g)
+            self.assertEqual(True, semver.version.Version(l) < semver.version.Version(g))
+            self.assertEqual(True, semver.version.Version(g) > semver.version.Version(l))
+            self.assertEqual(False, semver.version.Version(g) == semver.version.Version(l))
+            self.assertEqual(True, semver.version.Version(g) != semver.version.Version(l))
+
+
 if __name__ == '__main__': unittest.main()

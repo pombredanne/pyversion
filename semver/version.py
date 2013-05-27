@@ -65,6 +65,41 @@ class Version():
         version, identifiers, build = split(self.string)
         self._analyze(version, identifiers, build)
 
+    def _lesseridentifiers(self, fidentifiers):
+        result = True
+        for i, t in enumerate(zip(self.identifiers, fidentifiers)):
+            local, foreign = t
+            if local > foreign and not self._lesseridentifiers(fidentifiers[i+1:]):
+                print(local, foreign)
+                result = False
+                break
+        return result
+
+    def __eq__(self, v):
+        """Checks if two versions are equal.
+        """
+        result = False
+        if (self.major == v.major and self.minor == v.minor and 
+            self.patch == v.patch and self.identifiers == v.identifiers):
+            result = True
+        return result
+
+    def __lt__(self, v):
+        """Compares another version.
+        :param v: version object
+        :type v: semver.version.Version
+        """
+        result = True
+        if self.major > v.major:
+            result = False
+        elif self.major == v.major and self.minor > v.minor:
+            result = False
+        elif self.major == v.major and self.minor == v.minor and self.patch > v.patch:
+            result = False
+        elif self.major == v.major and self.minor == v.minor and self.patch == v.patch:
+            if not self._lesseridentifiers(v.identifiers): result = False
+        return result
+
     def _setversion(self, version):
         """Sets version.
         :param version: version string (e.g.: 3.9.2)
@@ -81,12 +116,15 @@ class Version():
         :type identifiers: str
         """
         if identifiers: identifiers = identifiers.split('.')
+        else: identifiers = []
 
-        for i in range(len(self.identifiers)):
-            identifier = self.identifiers[i]
+        for i in range(len(identifiers)):
+            identifier = identifiers[i]
             if re.match(valid_identifier_regexp, identifier) is None:
                 raise InvalidIdentifierError('invalid identifier (part {0}): {1}'.format(i+1, identifier))
-            if identifier.isdecimal(): self.identifiers[i] = int(identifier)
+            if identifier.isdecimal(): identifier = int(identifier)
+            identifiers[i] = identifier
+        self.identifiers = identifiers
 
     def _setbuild(self, build):
         """Sets build metadata.
