@@ -13,7 +13,7 @@ __version__ = '0.0.1'
 
 
 valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
-valid_verstring_regexp = re.compile('[0-9]+\.[0-9]+\.[0-9]+(\-([0-9A-Za-z-].?)+)?(\+[0-9A-Za-z-]+)?')
+valid_verstring_regexp = re.compile('[0-9]+\.[0-9]+\.[0-9]+(-([0-9A-Za-z-].?)+)?(\+[0-9A-Za-z-]+)?')
 
 
 class InvalidVersionStringError(Exception):
@@ -81,12 +81,12 @@ class Version():
         :type identifiers: str
         """
         if identifiers: identifiers = identifiers.split('.')
-        else: identifiers = []
-        for i in range(len(identifiers)):
-            if re.match(valid_identifier_regexp, identifiers[i]) is None:
-                raise InvalidIdentifierError('invalid identifier (part {0}): {1}'.format(i, identifiers[i]))
-            if identifiers[i].isdecimal(): identifiers[i] = int(identifiers[i])
-        self.identifiers = identifiers
+
+        for i in range(len(self.identifiers)):
+            identifier = self.identifiers[i]
+            if re.match(valid_identifier_regexp, identifier) is None:
+                raise InvalidIdentifierError('invalid identifier (part {0}): {1}'.format(i+1, identifier))
+            if identifier.isdecimal(): self.identifiers[i] = int(identifier)
 
     def _setbuild(self, build):
         """Sets build metadata.
