@@ -13,7 +13,10 @@ __version__ = '0.0.1'
 
 
 valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
-valid_verstring_regexp = re.compile('[0-9]+\.[0-9]+\.[0-9]+(-([0-9A-Za-z-].?)+)?(\+[0-9A-Za-z-]+)?')
+base_regexp =   ('[0-9]+\.[0-9]+\.[0-9]+'                   #   major.minor.patch
+                '(-([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?'     #   identifiers
+                '(\+([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?')   #   build
+match_regexp = re.compile('^{0}$'.format(base_regexp))
 
 
 class InvalidVersionStringError(Exception):
@@ -24,14 +27,11 @@ class InvalidIdentifierError(Exception):
     pass
 
 
-def split(string):
+def _split(string):
     """Splits version string into main version,
     identifiers and build metadata.
     """
     version, identifiers, build = '', '', ''
-    if re.match(valid_verstring_regexp, string) is None:
-        raise InvalidVersionStringError(string)
-
     if '-' in string:
         n = string.index('-')
         version = string[:n]
@@ -49,6 +49,13 @@ def split(string):
     return (version, identifiers, build)
 
 
+def valid(string):
+    """Returns True if given string is
+    a valid version string.
+    """
+    return match_regexp.match(string) is not None
+
+
 class Version():
     """Object representing version.
     """
@@ -62,7 +69,9 @@ class Version():
         :type string: str
         """
         self.string = string
-        version, identifiers, build = split(self.string)
+        if not valid(self.string):
+            raise InvalidVersionStringError('invalid version string: {0}'.format(self.string))
+        version, identifiers, build = _split(self.string)
         self._analyze(version, identifiers, build)
 
     def _lesseridentifiers(self, fidentifiers):
