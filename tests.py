@@ -27,6 +27,7 @@ class ComparisonTests(unittest.TestCase):
                         ('6.4.8-a.3+17', '6.4.8-a.4+2'),
                         ('6.4.8', '6.40.8'),
                         ('3.2.1-rc.8', '3.2.1'),
+                        ('3.2.1-alpha.1', '3.2.1-alpha.1.rel.3'),
                     ]
         for l, g in versions:
             self.assertEqual(True, semver.version.Version(l) < semver.version.Version(g))

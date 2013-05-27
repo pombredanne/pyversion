@@ -27,6 +27,24 @@ class InvalidIdentifierError(Exception):
     pass
 
 
+def _prerelzip(a, b):
+    """Zips two prerelease lists.
+    If one is longer it will not truncate but
+    will fill with zeros.
+    """
+    n = max(len(a), len(b))
+    zipped = []
+    for i in range(n):
+        try: m = a[i]
+        except IndexError: m = 0
+        finally: pass
+        try: n = b[i]
+        except IndexError: n = 0
+        finally: pass
+        zipped.append( (m, n) )
+    return zipped
+
+
 def _split(string):
     """Splits version string into main version,
     prerelease and build metadata.
@@ -85,13 +103,21 @@ class Version():
         self._setprerelease(prerelease)
         self._setbuild(build)
 
-    def _lesserprerelease(self, fprerelease):
+    def _lesserprerelease(self, fprerelease, n=0):
+        """Compares prerelease identifiers.
+        :param fprerelease: prerelease identifiers list
+        """
         result = True
-        for i, t in enumerate(zip(self.prerelease, fprerelease)):
+        for i, t in enumerate(_prerelzip(self.prerelease[n:], fprerelease[n:])):
             local, foreign = t
-            if local > foreign and not self._lesserprerelease(fprerelease[i+1:]):
-                result = False
-                break
+            try:
+                comparison = local > foreign
+            except TypeError:
+                if type(local) == int: comparison = True
+                elif type(foreign) == int: comparison = False
+            finally:
+                if comparison and not self._lesserprerelease(fprerelease, n=i+1): result = False
+            if not result: break
         return result
 
     def __eq__(self, v):
@@ -176,13 +202,9 @@ class Version():
         :type version: str
         """
         version = version.split('.')
-        self.major = version[0]
-        self.minor = version[1]
-        self.patch = version[2]
-        if convert:
-            self.major = int(self.major)
-            self.minor = int(self.minor)
-            self.patch = int(self.patch)
+        self.major = int(version[0])
+        self.minor = int(version[1])
+        self.patch = int(version[2])
 
     def _setprerelease(self, prerelease):
         """Sets prerelease.
