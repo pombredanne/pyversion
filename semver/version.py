@@ -58,6 +58,15 @@ def valid(string):
 
 class Version():
     """Object representing version.
+
+    When `tuple()` is made from this Version() object it
+    will consist of only version and not prerelease identifiers or
+    build metadata.
+
+    `str()` will return only version (without prerelease identifiers or
+    build metadata). If you want to have full representation use `repr()`.
+
+    If converted to `bool()` it always returns True.
     """
     string = ''
     major, minor, patch = 0, 0, 0
@@ -72,7 +81,9 @@ class Version():
         if not valid(self.string):
             raise InvalidVersionStringError('invalid version string: {0}'.format(self.string))
         version, prerelease, build = _split(self.string)
-        self._analyze(version, prerelease, build)
+        self._setversion(version)
+        self._setprerelease(prerelease)
+        self._setbuild(build)
 
     def _lesserprerelease(self, fprerelease):
         result = True
@@ -109,9 +120,13 @@ class Version():
         return result
 
     def __le__(self, v):
+        """Less or equal.
+        """
         return self.__eq__(v) or self.__lt__(v)
 
     def __ge__(self, v):
+        """Greater or equal.
+        """
         return self.__eq__(v) or self.__gt__(v)
 
     def __str__(self):
@@ -133,15 +148,41 @@ class Version():
         if self.build: final += '+{0}'.format(self.build)
         return final
 
+    def __bool__(self):
+        """Always True.
+        """
+        return True
+
+    def __iter__(self):
+        """Iterates over everything - version and prerelease.
+        """
+        version = [self.major, self.minor, self.patch] + self.prerelease
+        return iter(version)
+
+    def __getitem__(self, n):
+        """Returns items only from version and
+        not prerelease identifiers or
+        build metadata.
+        """
+        if n == 0: item = self.major
+        elif n == 1: item = self.minor
+        elif n == 2: item = self.patch
+        else: raise IndexError('index out of range')
+        return item
+
     def _setversion(self, version):
         """Sets version.
         :param version: version string (e.g.: 3.9.2)
         :type version: str
         """
         version = version.split('.')
-        self.major = int(version[0])
-        self.minor = int(version[1])
-        self.patch = int(version[2])
+        self.major = version[0]
+        self.minor = version[1]
+        self.patch = version[2]
+        if convert:
+            self.major = int(self.major)
+            self.minor = int(self.minor)
+            self.patch = int(self.patch)
 
     def _setprerelease(self, prerelease):
         """Sets prerelease.
@@ -168,16 +209,20 @@ class Version():
 
     def _analyze(self, version, prerelease='', build=''):
         """Analyzes version data.
-        :param vt: version tuple (version, prerelease) returned by split()
-        :type vt: tuple
         """
         self._setversion(version)
         self._setprerelease(prerelease)
         self._setbuild(build)
 
-    def satisfies(self, min=None, max=None):
+    def satisfies(self, min=None, max=None, but=[]):
         """Returns True if this version satisfies requirements
         set as arguments.
+        To match only one version set the same version to min and
+        max.
+
+        :param min: minimal version
+        :param max: maximal version
+        :param but: match all **but** these versions
         """
         result = False
         if min is not None and max is None:
@@ -186,4 +231,8 @@ class Version():
             result = self < Version(max)
         elif min is not None and max is not None:
             result = self > Version(min) and self < Version(max)
+
+        if but:
+            but = [Version(v) for v in but]
+            if self in but: result = False
         return result
