@@ -70,7 +70,6 @@ class Version():
         for i, t in enumerate(zip(self.identifiers, fidentifiers)):
             local, foreign = t
             if local > foreign and not self._lesseridentifiers(fidentifiers[i+1:]):
-                print(local, foreign)
                 result = False
                 break
         return result
@@ -99,6 +98,25 @@ class Version():
         elif self.major == v.major and self.minor == v.minor and self.patch == v.patch:
             if not self._lesseridentifiers(v.identifiers): result = False
         return result
+
+    def __str__(self):
+        """Returns only version (without identifiers or
+        build metadata).
+        To get string representation with more info use repr().
+        """
+        return '{0}.{1}.{2}'.format(self.major, self.minor, self.patch)
+
+    def __repr__(self):
+        """Returns version, identifiers and build metadata.
+        To get only version use str().
+        """
+        final = str(self)
+        if self.identifiers:
+            final += '-'
+            for i in self.identifiers: final += '{0}.'.format(i)
+            final = final[:-1]
+        if self.build: final += '+{0}'.format(self.build)
+        return final
 
     def _setversion(self, version):
         """Sets version.

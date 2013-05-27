@@ -44,11 +44,22 @@ class ComparisonTests(unittest.TestCase):
                         ('3.2.1-rc.8', '3.2.1-rc.12'),
                     ]
         for l, g in versions:
-            print(l, g)
             self.assertEqual(True, semver.version.Version(l) < semver.version.Version(g))
             self.assertEqual(True, semver.version.Version(g) > semver.version.Version(l))
             self.assertEqual(False, semver.version.Version(g) == semver.version.Version(l))
             self.assertEqual(True, semver.version.Version(g) != semver.version.Version(l))
+
+
+class StringTests(unittest.TestCase):
+    def testStr(self):
+        v = semver.version.Version('3.9.3-release.4+build.42')
+        print(str(v))
+        self.assertEqual('3.9.3', str(v))
+
+    def testRepr(self):
+        v = semver.version.Version('3.9.3-release.4+build.42')
+        print(repr(v))
+        self.assertEqual('3.9.3-release.4+build.42', repr(v))
 
 
 if __name__ == '__main__': unittest.main()
