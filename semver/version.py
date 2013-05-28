@@ -13,9 +13,9 @@ __version__ = '0.0.1'
 
 
 valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
-base_regexp =   ('[0-9]+\.[0-9]+\.[0-9]+'                   #   major.minor.patch
-                '(-([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?'     #   prerelease
-                '(\+([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?')   #   build
+base_regexp = ('[0-9]+\.[0-9]+\.[0-9]+'                     # major.minor.patch
+               '(-([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?'      # prerelease
+               '(\+([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?')    # build
 match_regexp = re.compile('^{0}$'.format(base_regexp))
 
 
@@ -41,7 +41,7 @@ def _prerelzip(a, b):
         try: n = b[i]
         except IndexError: n = 0
         finally: pass
-        zipped.append( (m, n) )
+        zipped.append((m, n))
     return zipped
 
 
@@ -72,6 +72,40 @@ def valid(string):
     a valid version string.
     """
     return match_regexp.match(string) is not None
+
+
+class Matcher():
+    """Object utilizing version matching functionality.
+    """
+    def __init__(self, min, max, but=[], between=()):
+        """To match only one version set the same version to min and
+        max.
+
+        :param min: minimal version
+        :param max: maximal version
+        :param but: match all **but** these versions
+        :param between: match all versions between this (two-tuple)
+        """
+        self.min, self.max = Version(min), Version(max)
+        if but: self.but = [Version(b) for b in but]
+        if between: self.between = (Version(between[0]), Version(between[1]))
+
+    def match(self, version):
+        """Returns True if given version matches Matcher() instance.
+        """
+        result = False
+        if self.min is not None and self.max is None:
+            result = version > self.min
+        elif self.min is None and self.max is not None:
+            result = version < self.max
+        elif self.min is not None and self.max is not None:
+            result = version > self.min and self < self.max
+
+        if self.but:
+            if version in self.but: result = False
+        if self.between and not result:
+            if self.between[0] <= version and self.between[1] >= version: result = True
+        return result
 
 
 class Version():
@@ -124,8 +158,8 @@ class Version():
         """Checks if two versions are equal.
         """
         result = False
-        if (self.major == v.major and self.minor == v.minor and 
-            self.patch == v.patch and self.prerelease == v.prerelease):
+        if (self.major == v.major and self.minor == v.minor and
+                self.patch == v.patch and self.prerelease == v.prerelease):
             result = True
         return result
 
@@ -236,7 +270,7 @@ class Version():
         self._setprerelease(prerelease)
         self._setbuild(build)
 
-    def satisfies(self, min=None, max=None, but=[]):
+    def satisfies(self, min=None, max=None, but=[], between=()):
         """Returns True if this version satisfies requirements
         set as arguments.
         To match only one version set the same version to min and
@@ -245,7 +279,10 @@ class Version():
         :param min: minimal version
         :param max: maximal version
         :param but: match all **but** these versions
+        :param between: match versions between this (two-tuple)
         """
+        return Matcher(min=min, max=max, but=but, between=between).match(repr(self))
+
         result = False
         if min is not None and max is None:
             result = self > Version(min)
@@ -257,4 +294,9 @@ class Version():
         if but:
             but = [Version(v) for v in but]
             if self in but: result = False
+        if between:
+            if len(between) != 2:
+                raise TypeError('between argument must be tuple of length 2: was {0}'.format(len(between)))
+            lesser, greater = Version(between[0]), Version(between[1])
+            if lesser <= self and greater >= self: pass
         return result
