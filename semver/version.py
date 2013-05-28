@@ -2,6 +2,7 @@
 
 
 import re
+import warnings
 
 
 """This is main module for semver.py - Semantic Versioning
@@ -30,16 +31,16 @@ class InvalidIdentifierError(Exception):
 def _prerelzip(a, b):
     """Zips two prerelease lists.
     If one is longer it will not truncate but
-    will fill with zeros.
+    will fill with integer `-1`.
     """
     n = max(len(a), len(b))
     zipped = []
     for i in range(n):
         try: m = a[i]
-        except IndexError: m = 0
+        except IndexError: m = -1
         finally: pass
         try: n = b[i]
-        except IndexError: n = 0
+        except IndexError: n = -1
         finally: pass
         zipped.append((m, n))
     return zipped
@@ -89,10 +90,11 @@ class Comparison():
         self.first = first
         self.second = second
 
-    def _lesserprerelease(self, n=0):
+    def _prereleaselt(self, n=0):
         """Compares prerelease identifiers.
         :param fprerelease: prerelease identifiers list
         """
+        warnings.warn('TODO: refactor to be more like `_prereleasegt()`')
         result = True
         for i, t in enumerate(_prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])):
             local, foreign = t
@@ -102,8 +104,24 @@ class Comparison():
                 if type(local) == int: comparison = True
                 else: comparison = False
             finally:
-                if comparison and not self._lesserprerelease(n=i+1): result = False
+                if comparison and not self._prereleaselt(n=i+1): result = False
             if not result: break
+        return result
+
+    def _prereleasegt(self, n=0):
+        """Checks if prerelease identifiers of first are greater than second.
+        """
+        result = False
+        for i, zipped in enumerate(_prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])):
+            first, second = zipped
+            try:
+                comp = first > second
+            except TypeError:
+                if type(first) == int: comp = True
+                else: comp = False
+            finally:
+                if comp or self._prereleasegt(n=i+1): result = True
+            if result: break
         return result
 
     def eq(self):
@@ -116,6 +134,7 @@ class Comparison():
         return result
 
     def lt(self):
+        warnings.warn('TODO: refactor to be more like `gt()`')
         result = True
         if self.first.major > self.second.major:
             result = False
@@ -126,7 +145,20 @@ class Comparison():
             result = False
         elif (self.first.major == self.second.major and self.first.minor == self.second.minor
                 and self.first.patch == self.second.patch):
-            if not self._lesserprerelease(0): result = False
+            if not self._prereleaselt(0): result = False
+        return result
+
+    def gt(self):
+        result = False
+        if self.first.major > self.second.major:
+            result = True
+        elif self.first.major == self.second.major and self.first.minor > self.second.minor:
+            result = True
+        elif (self.first.major == self.second.major and self.first.minor == self.second.minor and
+                self.first.patch > self.second.patch):
+            result = True
+        if not result:
+            if self._prereleasegt(0): result = True
         return result
 
 
