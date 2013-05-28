@@ -72,7 +72,7 @@ class SatisfactionTests(unittest.TestCase):
 
     def testMaximal(self):
         v = semver.version.Version('1.8.12')
-        self.assertEqual(True, v.satisfies(max='3.2.1'))
+        self.assertEqual(True, v.satisfies(max='1.8.12'))
     
     def testBetween(self):
         v = semver.version.Version('3.2.1-rc.8')
