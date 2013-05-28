@@ -3,44 +3,47 @@
 import unittest
 import semver
 
-class ComparisonTests(unittest.TestCase):
-    def testCompareOnlyVersion(self):
-        lesser = semver.version.Version('3.8.42')
-        greater = semver.version.Version('3.9.24')
-        self.assertEqual(True, lesser < greater)
-        self.assertEqual(True, greater > lesser)
-        self.assertEqual(False, greater == lesser)
-        self.assertEqual(True, greater != lesser)
 
-    def testCompareVersionsAndIdentifiersLesserToGreater(self):
-        versions =  [   ('3.2.1-alpha', '3.2.1-alpha.1'),
-                        ('3.2.1-alpha.1', '3.2.1-beta'),
-                        ('3.2.1-beta', '3.2.1-beta.4'),
-                        ('3.2.1-beta.4', '3.2.1-beta.17'),
-                        ('3.2.1-beta.17', '3.2.1-rc.8'),
-                        ('3.2.1-rc.8', '3.2.1-rc.12'),
-                        ('3.2.1', '3.2.2-alpha.1'),
-                        ('3.2.3', '3.2.4'),
-                        ('3.2.3-rc.8', '3.2.3-rel.1'),
-                        ('3.2.3-rc.8', '3.2.3-release.1'),
-                        ('3.2.1+7', '3.2.2+6'),
-                        ('6.4.8-a.3+17', '6.4.8-a.4+2'),
-                        ('6.4.8', '6.40.8'),
-                        ('3.2.1-rc.8', '3.2.1'),
-                        ('3.2.1-alpha.1', '3.2.1-alpha.1.rel.3'),
-                    ]
-        for l, g in versions:
+versions_to_compare_lt = [  ('3.2.3', '3.2.4'),
+                            ('3.2.1-alpha', '3.2.1-alpha.1'),
+                            ('3.2.1-alpha.1', '3.2.1-beta'),
+                            ('3.2.1-beta', '3.2.1-beta.4'),
+                            ('3.2.1-beta.4', '3.2.1-beta.17'),
+                            ('3.2.1-beta.17', '3.2.1-rc.8'),
+                            ('3.2.1-rc.8', '3.2.1-rc.12'),
+                            ('3.2.1', '3.2.2-alpha.1'),
+                            ('3.2.3-rc.8', '3.2.3-rel.1'),
+                            ('3.2.3-rc.8', '3.2.3-release.1'),
+                            ('3.2.1+7', '3.2.2+6'),
+                            ('6.4.8-a.3+17', '6.4.8-a.4+2'),
+                            ('6.4.8', '6.40.8'),
+                            ('3.2.1-rc.8', '3.2.1'),
+                            ('3.2.1-alpha.1', '3.2.1-alpha.1.rel.3'),
+                            ]
+
+versions_to_compare_gt = [  ('3.3.0', '3.2.4'),
+                            ('3.3.1-alpha.1', '3.3.1-alpha'),
+                            ('2.9.8-rc.7', '2.9.8-beta.14'),
+                            ('15.0.1-beta.4', '15.0.1-b.2'),
+                            ('16.12.47-release.1', '16.12.47-beta.12'),
+                            ]
+
+versions_to_compare_ge = [  ('3.2.1', '3.2.1'),
+                            ('3.2.2', '3.2.1'),
+                            ('3.3.6-rc.7', '3.3.6-rc.5'),
+                            ]
+
+class ComparisonTests(unittest.TestCase):
+    def testLesserThan(self):
+        for l, g in versions_to_compare_lt:
             self.assertEqual(True, semver.version.Version(l) < semver.version.Version(g))
+
+    def testGreaterThan(self):
+        for g, l in versions_to_compare_gt:
             self.assertEqual(True, semver.version.Version(g) > semver.version.Version(l))
-            self.assertEqual(False, semver.version.Version(g) == semver.version.Version(l))
-            self.assertEqual(True, semver.version.Version(g) != semver.version.Version(l))
 
     def testGreaterOrEqual(self):
-        vs = [  ('3.2.1', '3.2.1'),
-                ('3.2.2', '3.2.1'),
-                ('3.3.6-rc.7', '3.3.6-rc.5'),
-                ]
-        for x, y in vs:
+        for x, y in versions_to_compare_ge:
             self.assertEqual(True, x >= y)
 
 

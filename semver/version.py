@@ -78,7 +78,7 @@ class Comparison():
     """Class utilizing version comparison functionality.
 
     First version is always compared to the second which means that
-    `lessthan()` assumes: `first < second`.
+    `lt()` assumes: `first < second`.
     """
     def __init__(self, first, second):
         """:param first: first version
@@ -89,24 +89,44 @@ class Comparison():
         self.first = first
         self.second = second
 
+    def _lesserprerelease(self, n=0):
+        """Compares prerelease identifiers.
+        :param fprerelease: prerelease identifiers list
+        """
+        result = True
+        for i, t in enumerate(_prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])):
+            local, foreign = t
+            try:
+                comparison = local > foreign
+            except TypeError:
+                if type(local) == int: comparison = True
+                else: comparison = False
+            finally:
+                if comparison and not self._lesserprerelease(n=i+1): result = False
+            if not result: break
+        return result
+
     def eq(self):
         result = False
-        return result
-
-    def gt(self):
-        result = False
-        return result
-
-    def ge(self):
-        result = False
+        major = self.first.major == self.second.major
+        minor = self.first.minor == self.second.minor
+        patch = self.first.patch == self.second.patch
+        prerelease = self.first.prerelease == self.second.prerelease
+        result = major and minor and patch and prerelease
         return result
 
     def lt(self):
-        result = False
-        return result
-
-    def le(self):
-        result = False
+        result = True
+        if self.first.major > self.second.major:
+            result = False
+        elif self.first.major == self.second.major and self.first.minor > self.second.minor:
+            result = False
+        elif (self.first.major == self.second.major and self.first.minor == self.second.minor
+                and self.first.patch > self.second.patch):
+            result = False
+        elif (self.first.major == self.second.major and self.first.minor == self.second.minor
+                and self.first.patch == self.second.patch):
+            if not self._lesserprerelease(0): result = False
         return result
 
 
@@ -202,37 +222,14 @@ class Version():
     def __eq__(self, v):
         """Checks if two versions are equal.
         """
-        result = False
-        if (self.major == v.major and self.minor == v.minor and
-                self.patch == v.patch and self.prerelease == v.prerelease):
-            result = True
-        return result
+        return Comparison(self, v).eq()
 
     def __lt__(self, v):
         """Compares another version.
         :param v: version object
         :type v: semver.version.Version
         """
-        result = True
-        if self.major > v.major:
-            result = False
-        elif self.major == v.major and self.minor > v.minor:
-            result = False
-        elif self.major == v.major and self.minor == v.minor and self.patch > v.patch:
-            result = False
-        elif self.major == v.major and self.minor == v.minor and self.patch == v.patch:
-            if not self._lesserprerelease(v.prerelease): result = False
-        return result
-
-    def __le__(self, v):
-        """Less or equal.
-        """
-        return self.__eq__(v) or self.__lt__(v)
-
-    def __ge__(self, v):
-        """Greater or equal.
-        """
-        return self.__eq__(v) or self.__gt__(v)
+        return Comparison(self, v).lt()
 
     def __str__(self):
         """Returns only version (without prerelease or
