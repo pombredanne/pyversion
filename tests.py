@@ -4,7 +4,9 @@ import unittest
 from semver.version import Version, Comparison, valid
 
 
-versions_to_compare_lt = [  ('3.2.3', '3.2.4'),
+versions_to_compare_lt = [  ('2.0.0', '3.0.0'),
+                            ('3.0.1', '3.1.0'),
+                            ('3.0.0', '3.0.1'),
                             ('3.2.1-alpha', '3.2.1-alpha.1'),
                             ('3.2.1-alpha.1', '3.2.1-beta'),
                             ('3.2.1-beta', '3.2.1-beta.4'),
@@ -22,7 +24,7 @@ versions_to_compare_lt = [  ('3.2.3', '3.2.4'),
                             ]
 
 versions_to_compare_gt = [  ('3.0.0', '2.0.0'),
-                            ('3.1.0', '3.0.0'),
+                            ('3.1.0', '3.0.1'),
                             ('3.1.1', '3.1.0'),
                             ('3.0.1', '3.0.0-alpha'),
                             ('3.0.0-alpha.1', '3.0.0-alpha'),
@@ -38,6 +40,14 @@ versions_to_compare_ge = [  ('3.2.1', '3.2.1'),
                             ('3.3.6-rc.7', '3.3.6-rc.5'),
                             ]
 
+versions_to_compare_le = [  ('2.0.0', '3.0.0'),
+                            ('2.0.0', '2.0.0'),
+                            ('3.0.0', '3.0.1'),
+                            ('3.0.0-alpha', '3.0.0-alpha.1'),
+                            ('3.0.0-alpha.2', '3.0.0-alpha.2'),
+                            ('3.0.0-rc.7', '3.1.0-alpha.2'),
+                            ]
+
 class ComparisonTests(unittest.TestCase):
     def testLesserThan(self):
         for l, g in versions_to_compare_lt:
@@ -49,10 +59,15 @@ class ComparisonTests(unittest.TestCase):
             self.assertEqual(True, Comparison(Version(g), Version(l)).gt())
             self.assertEqual(True, Version(g) > Version(l))
 
-    @unittest.skip('')
     def testGreaterOrEqual(self):
         for x, y in versions_to_compare_ge:
-            self.assertEqual(True, x >= y)
+            self.assertEqual(True, Comparison(Version(x), Version(y)).ge())
+            self.assertEqual(True, Version(x) >= Version(y))
+
+    def testLesserOrEqual(self):
+        for x, y in versions_to_compare_le:
+            self.assertEqual(True, Comparison(Version(x), Version(y)).le())
+            self.assertEqual(True, Version(x) <= Version(y))
 
 
 class InitializationTests(unittest.TestCase):

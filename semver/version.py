@@ -10,7 +10,7 @@ library for Python3 language.
 """
 
 
-__version__ = '0.0.1'
+__version__ = '0.0.17'
 
 
 valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
@@ -134,18 +134,16 @@ class Comparison():
         return result
 
     def lt(self):
-        warnings.warn('TODO: refactor to be more like `gt()`')
-        result = True
-        if self.first.major > self.second.major:
-            result = False
-        elif self.first.major == self.second.major and self.first.minor > self.second.minor:
-            result = False
-        elif (self.first.major == self.second.major and self.first.minor == self.second.minor
-                and self.first.patch > self.second.patch):
-            result = False
-        elif (self.first.major == self.second.major and self.first.minor == self.second.minor
-                and self.first.patch == self.second.patch):
-            if not self._prereleaselt(0): result = False
+        result = False
+        if self.first.major < self.second.major:
+            result = True
+        elif self.first.major == self.second.major and self.first.minor < self.second.minor:
+            result = True
+        elif (self.first.major == self.second.major and self.first.minor == self.second.minor and
+                self.first.patch < self.second.patch):
+            result = True
+        if not result:
+            if self._prereleaselt(0): result = True
         return result
 
     def gt(self):
@@ -160,6 +158,12 @@ class Comparison():
         if not result:
             if self._prereleasegt(0): result = True
         return result
+
+    def ge(self):
+        return self.eq() or self.gt()
+
+    def le(self):
+        return self.eq() or self.lt()
 
 
 class Matcher():
@@ -262,6 +266,20 @@ class Version():
         :type v: semver.version.Version
         """
         return Comparison(self, v).lt()
+
+    def __gt__(self, v):
+        """Compares another version.
+        :param v: version object
+        :type v: semver.version.Version
+        """
+        return Comparison(self, v).gt()
+
+    def __ge__(self, v):
+        """Compares another version.
+        :param v: version object
+        :type v: semver.version.Version
+        """
+        return Comparison(self, v).ge()
 
     def __str__(self):
         """Returns only version (without prerelease or
