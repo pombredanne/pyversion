@@ -10,7 +10,7 @@ library for Python3 language.
 """
 
 
-__version__ = '0.0.17'
+__version__ = '0.1.0'
 
 
 valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
@@ -31,7 +31,7 @@ class InvalidIdentifierError(Exception):
 def _prerelzip(a, b):
     """Zips two prerelease lists.
     If one is longer it will not truncate but
-    will fill with integer `-1`.
+    fill with integer `-1`.
     """
     n = max(len(a), len(b))
     zipped = []
@@ -80,6 +80,10 @@ class Comparison():
 
     First version is always compared to the second which means that
     `lt()` assumes: `first < second`.
+
+    Also remember that integers are *greater* than strings so 
+        0 > 'a' -> True
+        0 < 'a' -> False
     """
     def __init__(self, first, second):
         """:param first: first version
@@ -87,12 +91,12 @@ class Comparison():
         :param second: second version
         :type second: semver.version.Version
         """
+        warnings.warn('refactor Comparison() to use strings instead of version objects (easier for testing and day-to-day programming)')
         self.first = first
         self.second = second
 
     def _prereleaselt(self, n=0):
         """Compares prerelease identifiers.
-        :param fprerelease: prerelease identifiers list
         """
         warnings.warn('TODO: refactor to be more like `_prereleasegt()`')
         result = True
@@ -108,8 +112,11 @@ class Comparison():
             if not result: break
         return result
 
-    def _prereleasegt(self, n=0):
+    def _prereleasegt(self, n):
         """Checks if prerelease identifiers of first are greater than second.
+
+        :param n: index at which we are starting comparison
+        :type n: int
         """
         result = False
         for i, zipped in enumerate(_prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])):
@@ -124,6 +131,25 @@ class Comparison():
             if result: break
         return result
 
+    def _prereleaselt2(self, n):
+        """Checks if prerelease identifiers of first are lesser than second.
+
+        :param n: index at which we are starting comparison
+        :type n: int
+        """
+        result = False
+        for i, zipped in enumerate(_prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])):
+            first, second = zipped
+            try:
+                comp = first < second
+            except TypeError:
+                if type(first) == int: comp = False
+                else: comp = True
+            finally:
+                if comp or self._prereleaselt2(n=n+1): result = True
+            if result: break
+        return result
+
     def eq(self):
         result = False
         major = self.first.major == self.second.major
@@ -131,19 +157,6 @@ class Comparison():
         patch = self.first.patch == self.second.patch
         prerelease = self.first.prerelease == self.second.prerelease
         result = major and minor and patch and prerelease
-        return result
-
-    def lt(self):
-        result = False
-        if self.first.major < self.second.major:
-            result = True
-        elif self.first.major == self.second.major and self.first.minor < self.second.minor:
-            result = True
-        elif (self.first.major == self.second.major and self.first.minor == self.second.minor and
-                self.first.patch < self.second.patch):
-            result = True
-        if not result:
-            if self._prereleaselt(0): result = True
         return result
 
     def gt(self):
@@ -157,6 +170,19 @@ class Comparison():
             result = True
         if not result:
             if self._prereleasegt(0): result = True
+        return result
+
+    def lt(self):
+        result = False
+        if self.first.major < self.second.major:
+            result = True
+        elif self.first.major == self.second.major and self.first.minor < self.second.minor:
+            result = True
+        elif (self.first.major == self.second.major and self.first.minor == self.second.minor and
+                self.first.patch < self.second.patch):
+            result = True
+        if not result:
+            if self._prereleaselt2(0): result = True
         return result
 
     def ge(self):
@@ -174,21 +200,18 @@ class Matcher():
     """
     min, max = None, None
     but = []
-    between = []
 
-    def __init__(self, min, max, but=[], between=()):
+    def __init__(self, min, max, but=[]):
         """To match only one version set the same version to min and
         max.
 
         :param min: minimal version
         :param max: maximal version
         :param but: match all **but** these versions
-        :param between: match all versions between this (two-tuple)
         """
         if min is not None: self.min = Version(min)
         if max is not None: self.max = Version(max)
         if but: self.but = [Version(b) for b in but]
-        if between: self.between = (Version(between[0]), Version(between[1]))
 
     def match(self, version):
         """Returns True if given version matches Matcher() instance.
@@ -196,16 +219,14 @@ class Matcher():
         version = Version(version)
         result = False
         if self.min is not None and self.max is None:
-            result = version > self.min
+            result = Comparison(version, self.min).ge()
         elif self.min is None and self.max is not None:
-            result = version < self.max
+            result = Comparison(version, self.max).le()
         elif self.min is not None and self.max is not None:
-            result = version > self.min and version < self.max
+            result = Comparison(version, self.min).ge() and Comparison(version, self.max).le()
 
         if self.but:
             if version in self.but: result = False
-        if self.between and not result:
-            if self.between[0] <= version and self.between[1] >= version: result = True
         return result
 
 
@@ -362,7 +383,7 @@ class Version():
         self._setprerelease(prerelease)
         self._setbuild(build)
 
-    def satisfies(self, min=None, max=None, but=[], between=()):
+    def satisfies(self, min=None, max=None, but=[]):
         """Returns True if this version satisfies requirements
         set as arguments.
         To match only one version set the same version to min and
@@ -371,6 +392,5 @@ class Version():
         :param min: minimal version
         :param max: maximal version
         :param but: match all **but** these versions
-        :param between: match versions between this (two-tuple)
         """
-        return Matcher(min=min, max=max, but=but, between=between).match(repr(self))
+        return Matcher(min=min, max=max, but=but).match(repr(self))

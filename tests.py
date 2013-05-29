@@ -4,6 +4,9 @@ import unittest
 from semver.version import Version, Comparison, valid
 
 
+DEBUG = False
+
+
 versions_to_compare_lt = [  ('2.0.0', '3.0.0'),
                             ('3.0.1', '3.1.0'),
                             ('3.0.0', '3.0.1'),
@@ -51,6 +54,7 @@ versions_to_compare_le = [  ('2.0.0', '3.0.0'),
 class ComparisonTests(unittest.TestCase):
     def testLesserThan(self):
         for l, g in versions_to_compare_lt:
+            if DEBUG: print(l, g)
             self.assertEqual(True, Comparison(Version(l), Version(g)).lt())
             self.assertEqual(True, Version(l) < Version(g))
 
@@ -66,6 +70,7 @@ class ComparisonTests(unittest.TestCase):
 
     def testLesserOrEqual(self):
         for x, y in versions_to_compare_le:
+            if DEBUG: print(x, y)
             self.assertEqual(True, Comparison(Version(x), Version(y)).le())
             self.assertEqual(True, Version(x) <= Version(y))
 
@@ -108,12 +113,12 @@ class SatisfactionTests(unittest.TestCase):
 class StringTests(unittest.TestCase):
     def testStr(self):
         v = Version('3.9.3-release.4+build.42')
-        print(str(v))
+        if DEBUG: print(str(v))
         self.assertEqual('3.9.3', str(v))
 
     def testRepr(self):
         v = Version('3.9.3-release.4+build.42')
-        print(repr(v))
+        if DEBUG: print(repr(v))
         self.assertEqual('3.9.3-release.4+build.42', repr(v))
 
 
