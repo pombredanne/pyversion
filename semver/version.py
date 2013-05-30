@@ -10,7 +10,7 @@ library for Python3 language.
 """
 
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
@@ -57,6 +57,7 @@ def _split(string):
         prerelease = string[n+1:]
     else:
         version = string
+
     if '+' in prerelease:
         n = prerelease.rindex('+')
         build = prerelease[n+1:]
@@ -87,30 +88,12 @@ class Comparison():
     """
     def __init__(self, first, second):
         """:param first: first version
-        :type first: semver.version.Version
+        :type first: str
         :param second: second version
-        :type second: semver.version.Version
+        :type second: str
         """
-        warnings.warn('refactor Comparison() to use strings instead of version objects (easier for testing and day-to-day programming)')
         self.first = first
         self.second = second
-
-    def _prereleaselt(self, n=0):
-        """Compares prerelease identifiers.
-        """
-        warnings.warn('TODO: refactor to be more like `_prereleasegt()`')
-        result = True
-        for i, t in enumerate(_prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])):
-            local, foreign = t
-            try:
-                comparison = local > foreign
-            except TypeError:
-                if type(local) == int: comparison = True
-                else: comparison = False
-            finally:
-                if comparison and not self._prereleaselt(n=i+1): result = False
-            if not result: break
-        return result
 
     def _prereleasegt(self, n):
         """Checks if prerelease identifiers of first are greater than second.
@@ -131,7 +114,7 @@ class Comparison():
             if result: break
         return result
 
-    def _prereleaselt2(self, n):
+    def _prereleaselt(self, n):
         """Checks if prerelease identifiers of first are lesser than second.
 
         :param n: index at which we are starting comparison
@@ -146,7 +129,7 @@ class Comparison():
                 if type(first) == int: comp = False
                 else: comp = True
             finally:
-                if comp or self._prereleaselt2(n=n+1): result = True
+                if comp or self._prereleaselt(n=n+1): result = True
             if result: break
         return result
 
@@ -182,7 +165,7 @@ class Comparison():
                 self.first.patch < self.second.patch):
             result = True
         if not result:
-            if self._prereleaselt2(0): result = True
+            if self._prereleaselt(0): result = True
         return result
 
     def ge(self):
@@ -216,8 +199,7 @@ class Matcher():
     def match(self, version):
         """Returns True if given version matches Matcher() instance.
         """
-        version = Version(version)
-        result = False
+        version, result = Version(version), False
         if self.min is not None and self.max is None:
             result = Comparison(version, self.min).ge()
         elif self.min is None and self.max is not None:
@@ -225,8 +207,7 @@ class Matcher():
         elif self.min is not None and self.max is not None:
             result = Comparison(version, self.min).ge() and Comparison(version, self.max).le()
 
-        if self.but:
-            if version in self.but: result = False
+        if self.but and version in self.but: result = False
         return result
 
 

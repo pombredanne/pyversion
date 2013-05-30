@@ -4,6 +4,7 @@ import unittest
 from semver.version import Version, Comparison, valid
 
 
+#   if set to True tests will be verbose
 DEBUG = False
 
 
