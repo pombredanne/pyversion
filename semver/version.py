@@ -2,7 +2,6 @@
 
 
 import re
-import warnings
 
 
 """This is main module for semver.py - Semantic Versioning
@@ -10,7 +9,7 @@ library for Python3 language.
 """
 
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
@@ -82,7 +81,7 @@ class Comparison():
     First version is always compared to the second which means that
     `lt()` assumes: `first < second`.
 
-    Also remember that integers are *greater* than strings so 
+    Also remember that integers are *greater* than strings so
         0 > 'a' -> True
         0 < 'a' -> False
     """
@@ -102,16 +101,14 @@ class Comparison():
         :type n: int
         """
         result = False
-        for i, zipped in enumerate(_prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])):
-            first, second = zipped
-            try:
-                comp = first > second
-            except TypeError:
-                if type(first) == int: comp = True
-                else: comp = False
-            finally:
-                if comp or self._prereleasegt(n=i+1): result = True
-            if result: break
+        first, second = _prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])[0]
+        try:
+            comp = first > second
+        except TypeError:
+            if type(first) == int: comp = True
+            else: comp = False
+        finally:
+            if comp or self._prereleasegt(n=n+1): result = True
         return result
 
     def _prereleaselt(self, n):
@@ -121,16 +118,14 @@ class Comparison():
         :type n: int
         """
         result = False
-        for i, zipped in enumerate(_prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])):
-            first, second = zipped
-            try:
-                comp = first < second
-            except TypeError:
-                if type(first) == int: comp = False
-                else: comp = True
-            finally:
-                if comp or self._prereleaselt(n=n+1): result = True
-            if result: break
+        first, second = _prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])[0]
+        try:
+            comp = first < second
+        except TypeError:
+            if type(first) == int: comp = False
+            else: comp = True
+        finally:
+            if comp or self._prereleaselt(n=n+1): result = True
         return result
 
     def eq(self):
@@ -151,8 +146,7 @@ class Comparison():
         elif (self.first.major == self.second.major and self.first.minor == self.second.minor and
                 self.first.patch > self.second.patch):
             result = True
-        if not result:
-            if self._prereleasegt(0): result = True
+        if not result and self._prereleasegt(0): result = True
         return result
 
     def lt(self):
@@ -164,8 +158,7 @@ class Comparison():
         elif (self.first.major == self.second.major and self.first.minor == self.second.minor and
                 self.first.patch < self.second.patch):
             result = True
-        if not result:
-            if self._prereleaselt(0): result = True
+        if not result and self._prereleaselt(0): result = True
         return result
 
     def ge(self):
@@ -239,23 +232,6 @@ class Version():
         self._setversion(version)
         self._setprerelease(prerelease)
         self._setbuild(build)
-
-    def _lesserprerelease(self, fprerelease, n=0):
-        """Compares prerelease identifiers.
-        :param fprerelease: prerelease identifiers list
-        """
-        result = True
-        for i, t in enumerate(_prerelzip(self.prerelease[n:], fprerelease[n:])):
-            local, foreign = t
-            try:
-                comparison = local > foreign
-            except TypeError:
-                if type(local) == int: comparison = True
-                elif type(foreign) == int: comparison = False
-            finally:
-                if comparison and not self._lesserprerelease(fprerelease, n=i+1): result = False
-            if not result: break
-        return result
 
     def __eq__(self, v):
         """Checks if two versions are equal.
@@ -344,7 +320,7 @@ class Version():
 
         for i in range(len(prerelease)):
             identifier = prerelease[i]
-            if re.match(valid_identifier_regexp, identifier) is None:
+            if not re.match(valid_identifier_regexp, identifier):
                 raise InvalidIdentifierError('invalid identifier (part {0}): {1}'.format(i+1, identifier))
             if identifier.isdecimal(): identifier = int(identifier)
             prerelease[i] = identifier
