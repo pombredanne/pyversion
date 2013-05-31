@@ -110,6 +110,14 @@ class SatisfactionTests(unittest.TestCase):
         v = Version('3.2.1-rc.8')
         self.assertEqual(True, v.satisfies(min='3.2.1-alpha.1', max='3.2.1-rc.12'))
 
+    def testExcept(self):
+        v = Version('3.2.1-rc.8')
+        self.assertEqual(False, v.satisfies(but=['3.2.1-rc.8']))
+
+    def testAll(self):
+        v = Version('3.2.1-rc.8')
+        self.assertEqual(True, v.satisfies())
+
 
 class StringTests(unittest.TestCase):
     def testStr(self):

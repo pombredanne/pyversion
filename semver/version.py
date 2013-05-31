@@ -9,7 +9,7 @@ library for Python3 language.
 """
 
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 
 valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
@@ -139,24 +139,26 @@ class Comparison():
 
     def gt(self):
         result = False
+        eqmajor = self.first.major == self.second.major
+        eqminor = self.first.minor == self.second.minor
         if self.first.major > self.second.major:
             result = True
-        elif self.first.major == self.second.major and self.first.minor > self.second.minor:
+        elif eqmajor and self.first.minor > self.second.minor:
             result = True
-        elif (self.first.major == self.second.major and self.first.minor == self.second.minor and
-                self.first.patch > self.second.patch):
+        elif eqmajor and eqminor and self.first.patch > self.second.patch:
             result = True
         if not result and self._prereleasegt(0): result = True
         return result
 
     def lt(self):
         result = False
+        eqmajor = self.first.major == self.second.major
+        eqminor = self.first.minor == self.second.minor
         if self.first.major < self.second.major:
             result = True
-        elif self.first.major == self.second.major and self.first.minor < self.second.minor:
+        elif eqmajor and self.first.minor < self.second.minor:
             result = True
-        elif (self.first.major == self.second.major and self.first.minor == self.second.minor and
-                self.first.patch < self.second.patch):
+        elif eqmajor and eqminor and self.first.patch < self.second.patch:
             result = True
         if not result and self._prereleaselt(0): result = True
         return result
@@ -177,9 +179,11 @@ class Matcher():
     min, max = None, None
     but = []
 
-    def __init__(self, min, max, but=[]):
+    def __init__(self, min=None, max=None, but=[]):
         """To match only one version set the same version to min and
         max.
+        In order to match every version except one leave `min` and `max` as
+        None and set only `but` parameter.
 
         :param min: minimal version
         :param max: maximal version
@@ -193,12 +197,15 @@ class Matcher():
         """Returns True if given version matches Matcher() instance.
         """
         version, result = Version(version), False
-        if self.min is not None and self.max is None:
+        min, max = self.min is not None, self.max is not None
+        if min and not max:
             result = Comparison(version, self.min).ge()
-        elif self.min is None and self.max is not None:
+        elif not min and max:
             result = Comparison(version, self.max).le()
-        elif self.min is not None and self.max is not None:
+        elif min and max:
             result = Comparison(version, self.min).ge() and Comparison(version, self.max).le()
+        elif not min and not max:
+            result = True
 
         if self.but and version in self.but: result = False
         return result
@@ -332,13 +339,6 @@ class Version():
         :type build: str
         """
         self.build = build
-
-    def _analyze(self, version, prerelease='', build=''):
-        """Analyzes version data.
-        """
-        self._setversion(version)
-        self._setprerelease(prerelease)
-        self._setbuild(build)
 
     def satisfies(self, min=None, max=None, but=[]):
         """Returns True if this version satisfies requirements
