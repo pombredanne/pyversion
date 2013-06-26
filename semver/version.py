@@ -75,6 +75,15 @@ def valid(string):
     return match_regexp.match(string) is not None
 
 
+def extract(string):
+    """Extracts version string from some text.
+    """
+    version = ''
+    try: version = re.compile(base_regexp).search(string).group(0)
+    except AttributeError: pass
+    finally: return version
+
+
 class Comparison():
     """Class utilizing version comparison functionality.
 
