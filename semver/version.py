@@ -27,14 +27,21 @@ class InvalidIdentifierError(Exception):
     pass
 
 
-def _prerelzip(a, b):
+def _prerelzip(a, b, start=0):
     """Zips two prerelease lists.
     If one is longer it will not truncate but
     fill with integer `-1`.
+
+    :param a: first list
+    :type a: list
+    :param b: second list
+    :type b: list
+    :param start: index at which zipping will start (everything before is lost)
+    :type start: int
     """
     n = max(len(a), len(b))
     zipped = []
-    for i in range(n):
+    for i in range(start, n):
         try: m = a[i]
         except IndexError: m = -1
         finally: pass
@@ -110,15 +117,19 @@ class Comparison():
         :type n: int
         """
         result = False
-        first, second = _prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])[0]
         try:
-            comp = first > second
-        except TypeError:
-            if type(first) == int: comp = True
-            else: comp = False
+            first, second = _prerelzip(self.first.prerelease, self.second.prerelease, n)[0]
+            try:
+                comp = first > second
+            except TypeError:
+                if type(first) == int: comp = True
+                else: comp = False
+            finally:
+                if comp or self._prereleasegt(n=n+1): result = True
+        except IndexError:
+            pass
         finally:
-            if comp or self._prereleasegt(n=n+1): result = True
-        return result
+            return result
 
     def _prereleaselt(self, n):
         """Checks if prerelease identifiers of first are lesser than second.
@@ -127,15 +138,19 @@ class Comparison():
         :type n: int
         """
         result = False
-        first, second = _prerelzip(self.first.prerelease[n:], self.second.prerelease[n:])[0]
         try:
-            comp = first < second
-        except TypeError:
-            if type(first) == int: comp = False
-            else: comp = True
+            first, second = _prerelzip(self.first.prerelease, self.second.prerelease, n)[0]
+            try:
+                comp = first < second
+            except TypeError:
+                if type(first) == int: comp = False
+                else: comp = True
+            finally:
+                if comp or self._prereleaselt(n=n+1): result = True
+        except IndexError:
+            pass
         finally:
-            if comp or self._prereleaselt(n=n+1): result = True
-        return result
+            return result
 
     def eq(self):
         result = False
