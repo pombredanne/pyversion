@@ -256,8 +256,8 @@ class Matcher():
 class Version():
     """Object representing version.
 
-    When `tuple()` is made from this Version() object it
-    will consist of only version and not prerelease identifiers or
+    When `tuple()` is made from Version() object it
+    will consist of only base version and not prerelease identifiers or
     build metadata.
 
     `str()` will return only version (without prerelease identifiers or
@@ -267,6 +267,7 @@ class Version():
     """
     string = ''
     major, minor, patch = 0, 0, 0
+    base = []
     prerelease = []
     build = ''
 
@@ -313,18 +314,15 @@ class Version():
         build metadata).
         To get string representation with more info use repr().
         """
-        return '{0}.{1}.{2}'.format(self.major, self.minor, self.patch)
+        return '.'.join([str(i) for i in self.base])
 
     def __repr__(self):
         """Returns version, prerelease and build metadata.
         To get only version use str().
         """
         final = str(self)
-        if self.prerelease:
-            final += '-'
-            for i in self.prerelease: final += '{0}.'.format(i)
-            final = final[:-1]
-        if self.build: final += '+{0}'.format(self.build)
+        if self.prerelease: final = '{0}-{1}'.format(final, '.'.join([str(i) for i in self.prerelease]))
+        if self.build: final = '{0}+{1}'.format(final, self.build)
         return final
 
     def __bool__(self):
@@ -343,11 +341,7 @@ class Version():
         not prerelease identifiers or
         build metadata.
         """
-        if n == 0: item = self.major
-        elif n == 1: item = self.minor
-        elif n == 2: item = self.patch
-        else: raise IndexError('index out of range')
-        return item
+        return self.base[n]
 
     def _setversion(self, version):
         """Sets version.
@@ -358,6 +352,7 @@ class Version():
         self.major = int(version[0])
         self.minor = int(version[1])
         self.patch = int(version[2])
+        self.base = [int(i) for i in version]
 
     def _setprerelease(self, prerelease):
         """Sets prerelease.
