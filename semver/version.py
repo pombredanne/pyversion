@@ -128,11 +128,35 @@ class Comparison():
         self.first = first
         self.second = second
 
-    def _basegt(self, n):
-        """Returns True if first version's base is greater than second version's base.
-        Keep in mind that `0.0.0.0` is still greater than `0.0.0`.
+    def _baseeq(self):
+        """Returns True if base versions are equal.
         """
-        pass
+        return self.first.base == self.second.base
+
+    def _basegt(self):
+        """Returns True if first version's base is greater than second version's base.
+        Keep in mind that `0.0.0.0` is greater than `0.0.0`.
+        """
+        result = False
+        for first, second in _extendedzip(self.first.base, self.second.base):
+            result = first > second
+            if result: break
+        return result
+
+    def _baselt(self):
+        """Returns True if first version's base if lesser than second version's base.
+        Keep in mind that `0.0.0` is lesser than `0.0.0.0`.
+        """
+        result = False
+        for first, second in _extendedzip(self.first.base, self.second.base):
+            result = first < second
+            if result: break
+        return result
+
+    def _prereleaseeq(self):
+        """Returns True if prerelease tags are equal in fisrt and second version.
+        """
+        return self.first.prerelease == self.second.prerelease
 
     def _prereleasegt(self, n):
         """Checks if prerelease identifiers of first are greater than second.
@@ -184,28 +208,14 @@ class Comparison():
 
     def gt(self):
         result = False
-        eqmajor = self.first.major == self.second.major
-        eqminor = self.first.minor == self.second.minor
-        if self.first.major > self.second.major:
-            result = True
-        elif eqmajor and self.first.minor > self.second.minor:
-            result = True
-        elif eqmajor and eqminor and self.first.patch > self.second.patch:
-            result = True
-        if not result and self._prereleasegt(0): result = True
+        if self._basegt(): result = True
+        elif self._baseeq() and self._prereleasegt(0): result = True
         return result
 
     def lt(self):
         result = False
-        eqmajor = self.first.major == self.second.major
-        eqminor = self.first.minor == self.second.minor
-        if self.first.major < self.second.major:
-            result = True
-        elif eqmajor and self.first.minor < self.second.minor:
-            result = True
-        elif eqmajor and eqminor and self.first.patch < self.second.patch:
-            result = True
-        if not result and self._prereleaselt(0): result = True
+        if self._baselt(): result = True
+        elif self._baseeq() and self._prereleaselt(0): result = True
         return result
 
     def ge(self):
@@ -268,19 +278,14 @@ class Version():
 
     If converted to `bool()` it always returns True.
     """
-    string = ''
-    major, minor, patch = 0, 0, 0
-    base = []
-    prerelease = []
-    build = ''
-
     def __init__(self, string):
         """:param string: version string
         :type string: str
         """
         self.string = string
-        if not valid(self.string):
-            raise InvalidVersionStringError('invalid version string: {0}'.format(self.string))
+        major, minor, patch = 0, 0, 0
+        base, prerelease, build = [], [], ''
+        if not valid(self.string): raise InvalidVersionStringError('invalid version string: {0}'.format(self.string))
         version, prerelease, build = _split(self.string)
         self._setversion(version)
         self._setprerelease(prerelease)
