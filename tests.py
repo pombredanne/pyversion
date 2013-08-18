@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
-from semver.version import Version, Comparison, valid
+from pyversion.version import Version, Comparison, valid
 
 
 #   if set to True tests will be verbose
