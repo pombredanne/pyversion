@@ -147,6 +147,16 @@ class ValidationTests(unittest.TestCase):
         for i in vs:
             self.assertEqual(True, valid(i))
 
+    def testValidNonstrictStrings(self):
+        vs = [  '123',
+                '1.2',
+                '3.2.1.2',
+                '3.2.1.2-rc.7',
+                '3.2.1.2-rc.7+build.13',
+                ]
+        for i in vs:
+            self.assertEqual(True, valid(i, strict=False))
+
     def testInvalid(self):
         vs = [  '3.2.1.2',
                 '3.9.2-alpha.1.?.release.5',

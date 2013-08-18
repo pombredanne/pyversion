@@ -9,13 +9,20 @@ library for Python3 language.
 """
 
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 
 valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
+# this is a strict version
 base_regexp = ('[0-9]+\.[0-9]+\.[0-9]+'                     # major.minor.patch
                '(-([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?'      # prerelease
                '(\+([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?')    # build
+# this version if more friendly: 123, 1.2.3.4 and 1.2 are
+# all valid for it
+permissive_regexp = ('[0-9]+(\.[0-9]+)*'                          # major.minor.patch
+                     '(-([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?'      # prerelease
+                     '(\+([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?')    # build
+
 match_regexp = re.compile('^{0}$'.format(base_regexp))
 
 
@@ -75,18 +82,28 @@ def _split(string):
     return (version, prerelease, build)
 
 
-def valid(string):
+def valid(string, strict=True):
     """Returns True if given string is
     a valid version string.
+
+    :param string: string to check
+    :param strict: tells whether to use strict or permissive version of the version-string regexp
     """
-    return match_regexp.match(string) is not None
+    if strict: regexp = base_regexp
+    else: regexp = permissive_regexp
+    return re.compile('^{}$'.format(regexp)).match(string) is not None
 
 
 def extract(string):
     """Extracts version string from some text.
+
+    :param string: string to check
+    :param strict: tells whether to use strict or permissive version of the version-string regexp
     """
     version = ''
-    try: version = re.compile(base_regexp).search(string).group(0)
+    if strict: regexp = base_regexp
+    else: regexp = permissive_regexp
+    try: version = re.compile('^{}$'.format(regexp)).search(string).group(0)
     except AttributeError: pass
     finally: return version
 
