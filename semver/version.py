@@ -35,7 +35,7 @@ class InvalidIdentifierError(Exception):
     pass
 
 
-def _prerelzip(a, b, start=0):
+def _extendedzip(a, b, start=0):
     """Zips two prerelease lists.
     If one is longer it will not truncate but
     fill with integer `-1`.
@@ -128,6 +128,12 @@ class Comparison():
         self.first = first
         self.second = second
 
+    def _basegt(self, n):
+        """Returns True if first version's base is greater than second version's base.
+        Keep in mind that `0.0.0.0` is still greater than `0.0.0`.
+        """
+        pass
+
     def _prereleasegt(self, n):
         """Checks if prerelease identifiers of first are greater than second.
 
@@ -136,7 +142,7 @@ class Comparison():
         """
         result = False
         try:
-            first, second = _prerelzip(self.first.prerelease, self.second.prerelease, n)[0]
+            first, second = _extendedzip(self.first.prerelease, self.second.prerelease, n)[0]
             try:
                 comp = first > second
             except TypeError:
@@ -157,7 +163,7 @@ class Comparison():
         """
         result = False
         try:
-            first, second = _prerelzip(self.first.prerelease, self.second.prerelease, n)[0]
+            first, second = _extendedzip(self.first.prerelease, self.second.prerelease, n)[0]
             try:
                 comp = first < second
             except TypeError:
@@ -171,13 +177,10 @@ class Comparison():
             return result
 
     def eq(self):
-        result = False
-        major = self.first.major == self.second.major
-        minor = self.first.minor == self.second.minor
-        patch = self.first.patch == self.second.patch
-        prerelease = self.first.prerelease == self.second.prerelease
-        result = major and minor and patch and prerelease
-        return result
+        """Returns True if versiosn are equal.
+        False otherwise.
+        """
+        return (self.first.base == self.second.base) and (self.first.prerelease == self.second.prerelease)
 
     def gt(self):
         result = False
