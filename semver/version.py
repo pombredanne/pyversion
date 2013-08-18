@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
 
-import re
-
-
-"""This is main module for semver.py - Semantic Versioning
-library for Python3 language.
+"""This module holds logic code for:
+    * extracting version strings from other strings,
+    * comparing version strings,
+    * metching versions,
+    * validating standard (strct) and non-standard (permissive) version strings,
+    * creating version objects,
 """
 
 
-__version__ = '0.1.4'
+import re
 
 
 valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
