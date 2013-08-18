@@ -5,84 +5,106 @@ from semver.version import Version, Comparison, valid
 
 
 #   if set to True tests will be verbose
-DEBUG = True
+DEBUG = False
 
 
-versions_to_compare_lt = [  ('2.0.0', '3.0.0', True),
-                            ('3.0.1', '3.1.0', True),
-                            ('3.0.0', '3.0.1', True),
-                            ('3.2.1-alpha', '3.2.1-alpha.1', True),
-                            ('3.2.1-alpha.1', '3.2.1-beta', True),
-                            ('3.2.1-beta', '3.2.1-beta.4', True),
-                            ('3.2.1-beta.4', '3.2.1-beta.17', True),
-                            ('3.2.1-beta.17', '3.2.1-rc.8', True),
-                            ('3.2.1-rc.8', '3.2.1-rc.12', True),
-                            ('3.2.1', '3.2.2-alpha.1', True),
-                            ('3.2.3-rc.8', '3.2.3-rel.1', True),
-                            ('3.2.3-rc.8', '3.2.3-release.1', True),
-                            ('3.2.1+7', '3.2.2+6', True),
-                            ('6.4.8-a.3+17', '6.4.8-a.4+2', True),
-                            ('6.4.8', '6.40.8', True),
-                            ('3.2.1-rc.8', '3.2.1', True),
-                            ('3.2.1-alpha.1', '3.2.1-alpha.1.rel.3', True),
-                            ('0.0.2', '0.0.1', False),
+# tuple structure:  (version, version, desired_result, strict)
+versions_to_compare_lt = [  ('2.0.0', '3.0.0', True, True),
+                            ('3.0.1', '3.1.0', True, True),
+                            ('3.0.0', '3.0.1', True, True),
+                            ('3.2.1-alpha', '3.2.1-alpha.1', True, True),
+                            ('3.2.1-alpha.1', '3.2.1-beta', True, True),
+                            ('3.2.1-beta', '3.2.1-beta.4', True, True),
+                            ('3.2.1-beta.4', '3.2.1-beta.17', True, True),
+                            ('3.2.1-beta.17', '3.2.1-rc.8', True, True),
+                            ('3.2.1-rc.8', '3.2.1-rc.12', True, True),
+                            ('3.2.1', '3.2.2-alpha.1', True, True),
+                            ('3.2.3-rc.8', '3.2.3-rel.1', True, True),
+                            ('3.2.3-rc.8', '3.2.3-release.1', True, True),
+                            ('3.2.1+7', '3.2.2+6', True, True),
+                            ('6.4.8-a.3+17', '6.4.8-a.4+2', True, True),
+                            ('6.4.8', '6.40.8', True, True),
+                            ('3.2.1-rc.8', '3.2.1', True, True),
+                            ('3.2.1-alpha.1', '3.2.1-alpha.1.rel.3', True, True),
+                            ('0.0.2', '0.0.1', False, True),
+                            # here starts list of non-strict version strigs
+                            ('0.0.0.1', '0.0.0.2', True, False),
+                            ('0.0.0.1', '0.0.1.0', True, False),
+                            ('1.0', '1.0.1', True, False),
+                            ('1', '1.0', True, False),
+                            ('1', '2', True, False),
+                            ('1-rc.7', '2-rc.2', True, False),
                             ]
 
-versions_to_compare_gt = [  ('3.0.0', '2.0.0', True),
-                            ('3.1.0', '3.0.1', True),
-                            ('3.1.1', '3.1.0', True),
-                            ('3.0.1', '3.0.0-alpha', True),
-                            ('3.0.0-alpha.1', '3.0.0-alpha', True),
-                            ('3.0.0-beta', '3.0.0-alpha.1', True),
-                            ('3.0.0-beta.1', '3.0.0-beta', True),
-                            ('3.0.0-rc', '3.0.0-beta.1', True),
-                            ('3.0.0-rc.1', '3.0.0-rc', True),
-                            ('3.0.0-release', '3.0.0-rc.1', True),
-                            ('0.0.3', '0.1.0-rc.1', True),
-                            ('0.0.2', '0.0.1', True),
-                            ('0.0.1', '0.0.2', False),
+versions_to_compare_gt = [  ('3.0.0', '2.0.0', True, True),
+                            ('3.1.0', '3.0.1', True, True),
+                            ('3.1.1', '3.1.0', True, True),
+                            ('3.0.1', '3.0.0-alpha', True, True),
+                            ('3.0.0-alpha.1', '3.0.0-alpha', True, True),
+                            ('3.0.0-beta', '3.0.0-alpha.1', True, True),
+                            ('3.0.0-beta.1', '3.0.0-beta', True, True),
+                            ('3.0.0-rc', '3.0.0-beta.1', True, True),
+                            ('3.0.0-rc.1', '3.0.0-rc', True, True),
+                            ('3.0.0-release', '3.0.0-rc.1', True, True),
+                            ('0.0.3', '0.1.0-rc.1', True, True),
+                            ('0.0.2', '0.0.1', True, True),
+                            ('0.0.1', '0.0.2', False, True),
+                            # here starts list of non-strict version strigs
+                            ('0.0.0.2', '0.0.0.1', True, False),
+                            ('0.0.1.0', '0.0.0.1', True, False),
+                            ('1.0.1', '1.0', True, False),
+                            ('1.0', '1', True, False),
+                            ('2', '1', True, False),
+                            ('2-rc.2', '1-rc.7', True, False),
                             ]
 
-versions_to_compare_ge = [  (True, '3.2.1', '3.2.1'),
-                            (True, '3.2.2', '3.2.1'),
-                            (True, '3.3.6-rc.7', '3.3.6-rc.5'),
-                            (False, '3.3.5-rc.7', '3.3.6-rc.5'),
+versions_to_compare_ge = [  ('3.2.1', '3.2.1', True, True),
+                            ('3.2.2', '3.2.1', True, True),
+                            ('3.3.6-rc.7', '3.3.6-rc.5', True, True),
+                            ('3.3.5-rc.7', '3.3.6-rc.5', False, True),
                             ]
 
-versions_to_compare_le = [  ('2.0.0', '3.0.0'),
-                            ('2.0.0', '2.0.0'),
-                            ('3.0.0', '3.0.1'),
-                            ('3.0.0-alpha', '3.0.0-alpha.1'),
-                            ('3.0.0-alpha.2', '3.0.0-alpha.2'),
-                            ('3.0.0-rc.7', '3.1.0-alpha.2'),
+versions_to_compare_le = [  ('2.0.0', '3.0.0', True, True),
+                            ('2.0.0', '2.0.0', True, True),
+                            ('3.0.0', '3.0.1', True, True),
+                            ('3.0.0-alpha', '3.0.0-alpha.1', True, True),
+                            ('3.0.0-alpha.2', '3.0.0-alpha.2', True, True),
+                            ('3.0.0-rc.7', '3.1.0-alpha.2', True, True),
+                            ('3.0.0-alpha.6', '3.0.0-alpha.2', False, True),
                             ]
 
 class ComparisonTests(unittest.TestCase):
     def testLesserThan(self):
-        for l, g, result in versions_to_compare_lt:
-            if DEBUG: print(l, g)
-            self.assertEqual(result, Comparison(Version(l), Version(g)).lt())
-            self.assertEqual(result, Version(l) < Version(g))
+        for first, second, result, strict in versions_to_compare_lt:
+            if DEBUG: print(first, '<', second)
+            first = Version(first, strict=strict)
+            second = Version(second, strict=strict)
+            self.assertEqual(result, Comparison(first, second).lt())
+            self.assertEqual(result, first < second)
 
     def testGreaterThan(self):
-        for g, l, result in versions_to_compare_gt:
-            if DEBUG: print(g, '>', l)
-            self.assertEqual(result, Comparison(Version(g), Version(l)).gt())
-            self.assertEqual(result, Version(g) > Version(l))
+        for first, second, result, strict in versions_to_compare_gt:
+            if DEBUG: print(first, '>', second)
+            first = Version(first, strict=strict)
+            second = Version(second, strict=strict)
+            self.assertEqual(result, Comparison(first, second).gt())
+            self.assertEqual(result, first > second)
 
-    @unittest.skip('')
     def testGreaterOrEqual(self):
-        for result, x, y in versions_to_compare_ge:
-            print(x, '>=', y)
-            self.assertEqual(result, Comparison(Version(x), Version(y)).ge())
-            self.assertEqual(result, Version(x) >= Version(y))
+        for first, second, result, strict in versions_to_compare_ge:
+            if DEBUG: print(first, '>=', second)
+            first = Version(first, strict=strict)
+            second = Version(second, strict=strict)
+            self.assertEqual(result, Comparison(first, second).ge())
+            self.assertEqual(result, first >= second)
 
-    @unittest.skip('')
     def testLesserOrEqual(self):
-        for x, y in versions_to_compare_le:
-            if DEBUG: print(x, y)
-            self.assertEqual(True, Comparison(Version(x), Version(y)).le())
-            self.assertEqual(True, Version(x) <= Version(y))
+        for first, second, result, strict in versions_to_compare_le:
+            if DEBUG: print(first, '<=', second)
+            first = Version(first, strict=strict)
+            second = Version(second, strict=strict)
+            self.assertEqual(result, Comparison(first, second).le())
+            self.assertEqual(result, first <= second)
 
 
 class InitializationTests(unittest.TestCase):

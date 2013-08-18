@@ -201,18 +201,24 @@ class Comparison():
             return result
 
     def eq(self):
-        """Returns True if versiosn are equal.
+        """Returns True if versions are equal.
         False otherwise.
         """
-        return (self.first.base == self.second.base) and (self.first.prerelease == self.second.prerelease)
+        return self._baseeq() and self._prereleaseeq()
 
     def gt(self):
+        """Returns True if first version is greater than second.
+        False otherwise.
+        """
         result = False
         if self._basegt(): result = True
         elif self._baseeq() and self._prereleasegt(0): result = True
         return result
 
     def lt(self):
+        """Returns True if first version is lesser than second.
+        False otherwise.
+        """
         result = False
         if self._baselt(): result = True
         elif self._baseeq() and self._prereleaselt(0): result = True
@@ -278,14 +284,16 @@ class Version():
 
     If converted to `bool()` it always returns True.
     """
-    def __init__(self, string):
+    def __init__(self, string, strict=True):
         """:param string: version string
         :type string: str
         """
         self.string = string
-        major, minor, patch = 0, 0, 0
-        base, prerelease, build = [], [], ''
-        if not valid(self.string): raise InvalidVersionStringError('invalid version string: {0}'.format(self.string))
+        self.strict = strict
+        self.major, self.minor, self.patch = 0, 0, 0
+        self.base, self.prerelease, self.build = [], [], ''
+        if not valid(string=self.string, strict=self.strict):
+            raise InvalidVersionStringError('invalid version string: {0}'.format(self.string))
         version, prerelease, build = _split(self.string)
         self._setversion(version)
         self._setprerelease(prerelease)
@@ -353,14 +361,15 @@ class Version():
 
     def _setversion(self, version):
         """Sets version.
-        :param version: version string (e.g.: 3.9.2)
+        :param version: version string (e.g.: 3.9.2 or 4.2.5.6)
         :type version: str
         """
-        version = version.split('.')
-        self.major = int(version[0])
-        self.minor = int(version[1])
-        self.patch = int(version[2])
-        self.base = [int(i) for i in version]
+        version = [int(i) for i in version.split('.')]
+        self.base = [i for i in version]
+        while len(version) < 3: version.append(-1)
+        self.major = version[0]
+        self.minor = version[1]
+        self.patch = version[2]
 
     def _setprerelease(self, prerelease):
         """Sets prerelease.
