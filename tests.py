@@ -5,7 +5,7 @@ from pyversion.version import Version, Comparison, valid
 
 
 #   if set to True tests will be verbose
-DEBUG = False
+DEBUG = True
 
 
 # tuple structure:  (version, version, desired_result, strict)
@@ -27,6 +27,7 @@ versions_to_compare_lt = [  ('2.0.0', '3.0.0', True, True),
                             ('3.2.1-rc.8', '3.2.1', True, True),
                             ('3.2.1-alpha.1', '3.2.1-alpha.1.rel.3', True, True),
                             ('0.0.2', '0.0.1', False, True),
+                            ('0.0.1-alpha.1', '0.0.1', True, True),
                             # here starts list of non-strict version strigs
                             ('0.0.0.1', '0.0.0.2', True, False),
                             ('0.0.0.1', '0.0.1.0', True, False),
@@ -49,6 +50,7 @@ versions_to_compare_gt = [  ('3.0.0', '2.0.0', True, True),
                             ('0.0.3', '0.1.0-rc.1', True, True),
                             ('0.0.2', '0.0.1', True, True),
                             ('0.0.1', '0.0.2', False, True),
+                            ('0.0.1', '0.0.1-alpha.1', True, True),
                             # here starts list of non-strict version strigs
                             ('0.0.0.2', '0.0.0.1', True, False),
                             ('0.0.1.0', '0.0.0.1', True, False),

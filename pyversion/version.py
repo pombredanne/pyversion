@@ -18,6 +18,7 @@ valid_identifier_regexp = re.compile('^[0-9A-Za-z-]*$')
 base_regexp = ('[0-9]+\.[0-9]+\.[0-9]+'                     # major.minor.patch
                '(-([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?'      # prerelease
                '(\+([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?')    # build
+
 # this version if more friendly: 123, 1.2.3.4 and 1.2 are
 # all valid for it
 permissive_regexp = ('[0-9]+(\.[0-9]+)*'                          # major.minor.patch
