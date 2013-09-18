@@ -7,4 +7,4 @@ test:
 	python3 -m unittest --verbose --catch --failfast tests.py
 
 clean:
-	rm -rv {./,./semver/}__pycache__/
+	@rm -rv ./{pyversion/,}__pycache__/
