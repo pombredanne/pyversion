@@ -35,6 +35,10 @@ versions_to_compare_lt = [  ('2.0.0', '3.0.0', True, True),
                             ('1', '1.0', True, False),
                             ('1', '2', True, False),
                             ('1-rc.7', '2-rc.2', True, False),
+                            ('28.0.1500.95-1', '29.0.1547.57-1', True, False),
+                            ('29.0.1547.57-1', '28.0.1500.95-1', False, False),
+                            ('1.8.3.4', '1.8.4', True, False),
+                            ('0.8.8.4-1', '0.8.8.4-2', True, False),
                             ]
 
 versions_to_compare_gt = [  ('3.0.0', '2.0.0', True, True),
@@ -58,6 +62,10 @@ versions_to_compare_gt = [  ('3.0.0', '2.0.0', True, True),
                             ('1.0', '1', True, False),
                             ('2', '1', True, False),
                             ('2-rc.2', '1-rc.7', True, False),
+                            ('28.0.1500.95-1', '29.0.1547.57-1', False, False),
+                            ('29.0.1547.57-1', '28.0.1500.95-1', True, False),
+                            ('1.8.4', '1.8.3.4', True, False),
+                            ('0.8.8.4-2', '0.8.8.4-1', True, False),
                             ]
 
 versions_to_compare_ge = [  ('3.2.1', '3.2.1', True, True),
