@@ -129,10 +129,12 @@ class Comparison():
         self.first = first
         self.second = second
 
-    def _baseeq(self):
+    def _baseeq(self, start=0):
         """Returns True if base versions are equal.
         """
-        return self.first.base == self.second.base
+        first = self.first.base[start:]
+        second = self.second.base[start:]
+        return first == second
 
     def _basegt(self):
         """Returns True if first version's base is greater than second version's base.
@@ -212,7 +214,9 @@ class Comparison():
         False otherwise.
         """
         result = False
-        if self._basegt(): result = True
+        basegt = self._basegt()
+        print('basegt:', basegt)
+        if basegt: result = True
         elif self._baseeq() and self._prereleasegt(0): result = True
         return result
 
