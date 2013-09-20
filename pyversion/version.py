@@ -36,7 +36,7 @@ class InvalidIdentifierError(Exception):
     pass
 
 
-def _extendedzip(a, b, start=0):
+def extendedzip(a, b, start=0):
     """Zips two prerelease lists.
     If one is longer it will not truncate but
     fill with integer `-1`.
@@ -96,7 +96,7 @@ def valid(string, strict=True):
     return re.compile('^{}$'.format(regexp)).match(string) is not None
 
 
-def extract(string):
+def extract(string, strict=True):
     """Extracts version string from some text.
 
     :param string: string to check
@@ -144,9 +144,13 @@ class Comparison():
         Keep in mind that `0.0.0.0` is greater than `0.0.0`.
         """
         result = False
-        for n, versions in enumerate(_extendedzip(self.first.base, self.second.base)):
-            first, second = versions
-            result = first > second
+        zipped = extendedzip(self.first.base, self.second.base)
+        for i in range(len(zipped)):
+            first, second = zipped[i]
+            if i == 0:
+                if first > second: result = True
+            else:
+                if self._baseeq(end=i) and first > second: result = True
             if result: break
         return result
 
@@ -155,8 +159,13 @@ class Comparison():
         Keep in mind that `0.0.0` is lesser than `0.0.0.0`.
         """
         result = False
-        for first, second in _extendedzip(self.first.base, self.second.base):
-            result = first < second
+        zipped = extendedzip(self.first.base, self.second.base)
+        for i in range(len(zipped)):
+            first, second = zipped[i]
+            if i == 0:
+                if first < second: result = True
+            else:
+                if self._baseeq(end=i) and first < second: result = True
             if result: break
         return result
 
@@ -166,14 +175,14 @@ class Comparison():
         return self.first.prerelease == self.second.prerelease
 
     def _prereleasegt(self, n):
-        """Checks if prerelease identifiers of first are greater than second.
+        """Checks if prerelease identifiers of first version are greater than second version.
 
         :param n: index at which we are starting comparison
         :type n: int
         """
         result = False
         try:
-            first, second = _extendedzip(self.first.prerelease, self.second.prerelease, n)[0]
+            first, second = extendedzip(self.first.prerelease, self.second.prerelease, n)[0]
             try:
                 comp = first > second
             except TypeError:
@@ -194,7 +203,7 @@ class Comparison():
         """
         result = False
         try:
-            first, second = _extendedzip(self.first.prerelease, self.second.prerelease, n)[0]
+            first, second = extendedzip(self.first.prerelease, self.second.prerelease, n)[0]
             try:
                 comp = first < second
             except TypeError:
@@ -244,10 +253,7 @@ class Matcher():
     When matching versions remember that Matcher() will match
     minimal and maximal versions **including** the given ones.
     """
-    min, max = None, None
-    but = []
-
-    def __init__(self, min=None, max=None, but=[]):
+    def __init__(self, min=None, max=None, but=[], strict=True):
         """To match only one version set the same version to min and
         max.
         In order to match every version except one leave `min` and `max` as
@@ -257,14 +263,17 @@ class Matcher():
         :param max: maximal version
         :param but: match all **but** these versions
         """
-        if min is not None: self.min = Version(min)
-        if max is not None: self.max = Version(max)
-        if but: self.but = [Version(b) for b in but]
+        self.min, self.max = None, None
+        self.but = []
+        self.strict = strict
+        if min is not None: self.min = Version(min, strict=self.strict)
+        if max is not None: self.max = Version(max, strict=self.strict)
+        if but: self.but = [Version(b, strict=self.strict) for b in but]
 
     def match(self, version):
         """Returns True if given version matches Matcher() instance.
         """
-        version, result = Version(version), False
+        version, result = Version(version, strict=self.strict), False
         min, max = self.min is not None, self.max is not None
         if min and not max:
             result = Comparison(version, self.min).ge()
@@ -312,25 +321,34 @@ class Version():
         return Comparison(self, v).eq()
 
     def __lt__(self, v):
-        """Compares another version.
+        """Checks if different version is lesser than this version.
         :param v: version object
-        :type v: semver.version.Version
+        :type v: pyversion.version.Version
         """
         return Comparison(self, v).lt()
 
     def __gt__(self, v):
-        """Compares another version.
+        """Checks if different version is greater than this version.
         :param v: version object
-        :type v: semver.version.Version
+        :type v: pyversion.version.Version
         """
         return Comparison(self, v).gt()
 
     def __ge__(self, v):
-        """Compares another version.
+        """Checks if different version is greater or equal to this version.
+
         :param v: version object
-        :type v: semver.version.Version
+        :type v: pyversion.version.Version
         """
         return Comparison(self, v).ge()
+
+    def __le__(self, v):
+        """Checks if different version is lesser or equal to this version.
+
+        :param v: version object
+        :type v: pyversion.version.Version
+        """
+        return Comparison(self, v).le()
 
     def __str__(self):
         """Returns only version (without prerelease or
@@ -356,7 +374,7 @@ class Version():
     def __iter__(self):
         """Iterates over everything - version and prerelease.
         """
-        version = [self.major, self.minor, self.patch] + self.prerelease
+        version = self.base + self.prerelease
         return iter(version)
 
     def __getitem__(self, n):
@@ -411,4 +429,4 @@ class Version():
         :param max: maximal version
         :param but: match all **but** these versions
         """
-        return Matcher(min=min, max=max, but=but).match(repr(self))
+        return Matcher(min=min, max=max, but=but, strict=self.strict).match(repr(self))

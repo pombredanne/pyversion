@@ -42,6 +42,8 @@ versions_to_compare_lt = [  ('2.0.0', '3.0.0', True, True),
                             ]
 
 versions_to_compare_gt = [  ('3.0.0', '2.0.0', True, True),
+                            ('3.0.1', '3.0.0', True, True),
+                            ('3.1.0', '3.0.0', True, True),
                             ('3.1.0', '3.0.1', True, True),
                             ('3.1.1', '3.1.0', True, True),
                             ('3.0.1', '3.0.0-alpha', True, True),
@@ -52,8 +54,9 @@ versions_to_compare_gt = [  ('3.0.0', '2.0.0', True, True),
                             ('3.0.0-rc.1', '3.0.0-rc', True, True),
                             ('3.0.0', '3.0.0-rc.1', True, True),
                             ('3.0.0', '3.0.0', False, True),
+                            ('0.2.0', '0.0.1', True, True),
+                            ('0.0.3', '0.1.0', False, True),
                             ('0.0.3', '0.1.0-rc.1', False, True),
-                            ('0.0.2', '0.0.1', True, True),
                             ('0.0.1', '0.0.2', False, True),
                             ('0.0.1', '0.0.1-alpha.1', True, True),
                             ('0.0.1', '0.0.1-beta.1', True, True),
@@ -69,6 +72,8 @@ versions_to_compare_gt = [  ('3.0.0', '2.0.0', True, True),
                             ('29.0.1547.57-1', '28.0.1500.95-1', True, False),
                             ('1.8.4', '1.8.3.4', True, False),
                             ('0.8.8.4-2', '0.8.8.4-1', True, False),
+                            ('5.4.3.2.1', '5.4.3.2.0', True, False),
+                            ('5.4.3.2.0', '5.4.3.2.1', False, False),
                             ]
 
 versions_to_compare_ge = [  ('3.2.1', '3.2.1', True, True),
@@ -87,7 +92,6 @@ versions_to_compare_le = [  ('2.0.0', '3.0.0', True, True),
                             ]
 
 class ComparisonTests(unittest.TestCase):
-    @unittest.skip('')
     def testLesserThan(self):
         for first, second, result, strict in versions_to_compare_lt:
             if DEBUG: print(first, '<', second)
@@ -105,7 +109,6 @@ class ComparisonTests(unittest.TestCase):
             self.assertEqual(result, Comparison(first, second).gt())
             self.assertEqual(result, first > second)
 
-    @unittest.skip('')
     def testGreaterOrEqual(self):
         for first, second, result, strict in versions_to_compare_ge:
             if DEBUG: print(first, '>=', second)
@@ -114,7 +117,6 @@ class ComparisonTests(unittest.TestCase):
             self.assertEqual(result, Comparison(first, second).ge())
             self.assertEqual(result, first >= second)
 
-    @unittest.skip('')
     def testLesserOrEqual(self):
         for first, second, result, strict in versions_to_compare_le:
             if DEBUG: print(first, '<=', second)
@@ -145,6 +147,22 @@ class InitializationTests(unittest.TestCase):
         self.assertEqual('42', v2.build)
 
 
+class NonstandardInitializationTests(unittest.TestCase):
+    def testVersionAndPrerelease(self):
+        v = Version('3.9.3.0-alpha.1.release.3', strict=False)
+        self.assertEqual(3, v[0])
+        self.assertEqual(9, v[1])
+        self.assertEqual(3, v[2])
+        self.assertEqual(0, v[3])
+        self.assertEqual(['alpha', 1, 'release', 3], v.prerelease)
+
+    def testBuildMetadata(self):
+        v1 = Version('3.9.3.0-alpha.1+42', strict=False)
+        v2 = Version('3.9.3.0+42', strict=False)
+        self.assertEqual('42', v1.build)
+        self.assertEqual('42', v2.build)
+
+
 class SatisfactionTests(unittest.TestCase):
     def testMinimal(self):
         v = Version('3.2.1')
@@ -167,16 +185,48 @@ class SatisfactionTests(unittest.TestCase):
         self.assertEqual(True, v.satisfies())
 
 
+class NonstandardSatisfactionTests(unittest.TestCase):
+    def testMinimal(self):
+        v = Version('3.2.1.0', strict=False)
+        self.assertEqual(True, v.satisfies(min='3.0.0'))
+
+    def testMaximal(self):
+        v = Version('1.8.12.13', strict=False)
+        self.assertEqual(True, v.satisfies(max='1.8.12.14'))
+    
+    def testBetween(self):
+        v = Version('3.2.1.0-rc.8', strict=False)
+        self.assertEqual(True, v.satisfies(min='3.2.1.0-alpha.1', max='3.2.1.0-rc.12'))
+
+    def testExcept(self):
+        v = Version('3.2.1.0-rc.8', strict=False)
+        self.assertEqual(False, v.satisfies(min='3.2.0.19', max='3.2.2.0', but=['3.2.1.0-rc.8']))
+
+    def testAll(self):
+        v = Version('3.2.1.0-rc.8', strict=False)
+        self.assertEqual(True, v.satisfies())
+
+
 class StringTests(unittest.TestCase):
     def testStr(self):
         v = Version('3.9.3-release.4+build.42')
         if DEBUG: print(str(v))
         self.assertEqual('3.9.3', str(v))
 
+    def testStrNonstandard(self):
+        v = Version('3.9.3.0-release.4+build.42', strict=False)
+        if DEBUG: print(str(v))
+        self.assertEqual('3.9.3.0', str(v))
+
     def testRepr(self):
         v = Version('3.9.3-release.4+build.42')
         if DEBUG: print(repr(v))
         self.assertEqual('3.9.3-release.4+build.42', repr(v))
+
+    def testReprNonstandard(self):
+        v = Version('3.9.3.0-release.4+build.42', strict=False)
+        if DEBUG: print(repr(v))
+        self.assertEqual('3.9.3.0-release.4+build.42', repr(v))
 
 
 class ValidationTests(unittest.TestCase):
