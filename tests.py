@@ -60,6 +60,7 @@ versions_to_compare_gt = [  ('3.0.0', '2.0.0', True, True),
                             ('0.0.1', '0.0.2', False, True),
                             ('0.0.1', '0.0.1-alpha.1', True, True),
                             ('0.0.1', '0.0.1-beta.1', True, True),
+                            ('0.0.1-beta.1', '0.0.1', False, True),
                             # here starts list of non-strict version strigs
                             ('0.0.0.2', '0.0.0.1', True, False),
                             ('0.0.1.0', '0.0.0.1', True, False),

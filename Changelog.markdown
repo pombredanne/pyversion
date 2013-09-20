@@ -5,6 +5,19 @@ This file contains history of changes in API of `pyversion` library.
 
 ----
 
+#### `0.3.1` (2013-09-20):
+
+This version fixes a bug in comparison logic which is a bit too long to explain in __fix__ note.
+The bug was appearing when comparing versions of equal bases but on with prerelease params and
+one without. According to standard the one without them is greater -- but `pyversion` said the one
+*with* them was greater. Now it's fixed.
+
+* __fix__:  fixed comparison,
+
+
+----
+
+
 #### `0.3.0` (2013-09-20):
 
 * __fix__:  fixed comparison for non-standard versions,
