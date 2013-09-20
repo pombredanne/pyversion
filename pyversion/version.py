@@ -129,11 +129,14 @@ class Comparison():
         self.first = first
         self.second = second
 
-    def _baseeq(self, start=0):
+    def _baseeq(self, start=0, end=0):
         """Returns True if base versions are equal.
         """
         first = self.first.base[start:]
         second = self.second.base[start:]
+        if end:
+            first = first[:end]
+            second = second[:end]
         return first == second
 
     def _basegt(self):
@@ -141,7 +144,8 @@ class Comparison():
         Keep in mind that `0.0.0.0` is greater than `0.0.0`.
         """
         result = False
-        for first, second in _extendedzip(self.first.base, self.second.base):
+        for n, versions in enumerate(_extendedzip(self.first.base, self.second.base)):
+            first, second = versions
             result = first > second
             if result: break
         return result
@@ -214,9 +218,7 @@ class Comparison():
         False otherwise.
         """
         result = False
-        basegt = self._basegt()
-        print('basegt:', basegt)
-        if basegt: result = True
+        if self._basegt(): result = True
         elif self._baseeq() and self._prereleasegt(0): result = True
         return result
 
