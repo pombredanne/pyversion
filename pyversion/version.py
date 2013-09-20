@@ -206,14 +206,17 @@ class Comparison():
         """
         result = False
         try:
-            first, second = extendedzip(self.first.prerelease, self.second.prerelease, n)[0]
-            try:
-                comp = first < second
-            except TypeError:
-                if type(first) == int: comp = False
-                else: comp = True
-            finally:
-                if comp or self._prereleaselt(n=n+1): result = True
+            if not self.first.prerelease and self.second.prerelease: result = False
+            elif self.first.prerelease and not self.second.prerelease: result = True
+            else:
+                first, second = extendedzip(self.first.prerelease, self.second.prerelease, n)[0]
+                try:
+                    comp = first < second
+                except TypeError:
+                    if type(first) == int: comp = False
+                    else: comp = True
+                finally:
+                    if comp or self._prereleaselt(n=n+1): result = True
         except IndexError:
             pass
         finally:
