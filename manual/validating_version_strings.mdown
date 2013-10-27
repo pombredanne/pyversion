@@ -1,0 +1,20 @@
+### Validating version strings
+
+If you want to check if a string is a valid *version string* use `pyversion.version.valid()` function.
+
+    string = '0.0.1'
+    pyversion.version.valid(string)  # True
+
+
+PyVersion supports non-standard semver-based strings.
+To enable them in in validation use `strict` parameter.
+
+    string = '0.4.2.8'  # this is non-standard version string
+
+    pyversion.version.valid(string)                 # False
+    pyversion.version.valid(string, strict=False)   # True
+
+
+----
+
+[Return to index](./index.mdown)

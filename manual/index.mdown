@@ -1,0 +1,10 @@
+### PyVersion manual
+
+This is a programmers' manual for PyVersion describing public API of the library.
+For documentation of internal workings and private API read the source.
+
+----
+
+### Topics
+
+0.  [Validating version strings](./validating_version_strings.mdown)
